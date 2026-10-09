@@ -1,0 +1,380 @@
+{
+  "window": {
+    "comment": [
+      "Half-open UTC window, as in project 1: start is included, end is not.",
+      "Every source is fetched and cleaned only inside it."
+    ],
+    "start_utc": "2024-01-01T00:00:00Z",
+    "end_utc": "2025-01-01T00:00:00Z"
+  },
+  "hubs": {
+    "comment": [
+      "The 30 busiest CONUS hubs. Honolulu is left out because the HRRR CONUS",
+      "grid does not cover Hawaii; Chicago Midway takes its place.",
+      "Coordinates are airport reference points; verify before the first run.",
+      "ICAO codes are K + IATA for every airport here."
+    ],
+    "airports": [
+      {
+        "iata": "ATL",
+        "icao": "KATL",
+        "name": "Atlanta Hartsfield-Jackson",
+        "latitude": 33.6407,
+        "longitude": -84.4277,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "DFW",
+        "icao": "KDFW",
+        "name": "Dallas/Fort Worth",
+        "latitude": 32.8998,
+        "longitude": -97.0403,
+        "timezone": "America/Chicago"
+      },
+      {
+        "iata": "DEN",
+        "icao": "KDEN",
+        "name": "Denver",
+        "latitude": 39.8561,
+        "longitude": -104.6737,
+        "timezone": "America/Denver"
+      },
+      {
+        "iata": "ORD",
+        "icao": "KORD",
+        "name": "Chicago O'Hare",
+        "latitude": 41.9742,
+        "longitude": -87.9073,
+        "timezone": "America/Chicago"
+      },
+      {
+        "iata": "LAX",
+        "icao": "KLAX",
+        "name": "Los Angeles",
+        "latitude": 33.9416,
+        "longitude": -118.4085,
+        "timezone": "America/Los_Angeles"
+      },
+      {
+        "iata": "JFK",
+        "icao": "KJFK",
+        "name": "New York JFK",
+        "latitude": 40.6413,
+        "longitude": -73.7781,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "LAS",
+        "icao": "KLAS",
+        "name": "Las Vegas Harry Reid",
+        "latitude": 36.084,
+        "longitude": -115.1537,
+        "timezone": "America/Los_Angeles"
+      },
+      {
+        "iata": "MCO",
+        "icao": "KMCO",
+        "name": "Orlando",
+        "latitude": 28.4312,
+        "longitude": -81.3081,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "MIA",
+        "icao": "KMIA",
+        "name": "Miami",
+        "latitude": 25.7959,
+        "longitude": -80.287,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "CLT",
+        "icao": "KCLT",
+        "name": "Charlotte Douglas",
+        "latitude": 35.2144,
+        "longitude": -80.9473,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "SEA",
+        "icao": "KSEA",
+        "name": "Seattle-Tacoma",
+        "latitude": 47.4502,
+        "longitude": -122.3088,
+        "timezone": "America/Los_Angeles"
+      },
+      {
+        "iata": "EWR",
+        "icao": "KEWR",
+        "name": "Newark Liberty",
+        "latitude": 40.6895,
+        "longitude": -74.1745,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "SFO",
+        "icao": "KSFO",
+        "name": "San Francisco",
+        "latitude": 37.6213,
+        "longitude": -122.379,
+        "timezone": "America/Los_Angeles"
+      },
+      {
+        "iata": "PHX",
+        "icao": "KPHX",
+        "name": "Phoenix Sky Harbor",
+        "latitude": 33.4352,
+        "longitude": -112.0101,
+        "timezone": "America/Phoenix"
+      },
+      {
+        "iata": "IAH",
+        "icao": "KIAH",
+        "name": "Houston Bush",
+        "latitude": 29.9902,
+        "longitude": -95.3368,
+        "timezone": "America/Chicago"
+      },
+      {
+        "iata": "BOS",
+        "icao": "KBOS",
+        "name": "Boston Logan",
+        "latitude": 42.3656,
+        "longitude": -71.0096,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "FLL",
+        "icao": "KFLL",
+        "name": "Fort Lauderdale",
+        "latitude": 26.0742,
+        "longitude": -80.1506,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "MSP",
+        "icao": "KMSP",
+        "name": "Minneapolis-St Paul",
+        "latitude": 44.8848,
+        "longitude": -93.2223,
+        "timezone": "America/Chicago"
+      },
+      {
+        "iata": "LGA",
+        "icao": "KLGA",
+        "name": "New York LaGuardia",
+        "latitude": 40.7769,
+        "longitude": -73.874,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "DTW",
+        "icao": "KDTW",
+        "name": "Detroit Metro",
+        "latitude": 42.2162,
+        "longitude": -83.3554,
+        "timezone": "America/Detroit"
+      },
+      {
+        "iata": "PHL",
+        "icao": "KPHL",
+        "name": "Philadelphia",
+        "latitude": 39.8744,
+        "longitude": -75.2424,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "SLC",
+        "icao": "KSLC",
+        "name": "Salt Lake City",
+        "latitude": 40.7899,
+        "longitude": -111.9791,
+        "timezone": "America/Denver"
+      },
+      {
+        "iata": "BWI",
+        "icao": "KBWI",
+        "name": "Baltimore/Washington",
+        "latitude": 39.1774,
+        "longitude": -76.6684,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "DCA",
+        "icao": "KDCA",
+        "name": "Washington Reagan",
+        "latitude": 38.8512,
+        "longitude": -77.0402,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "SAN",
+        "icao": "KSAN",
+        "name": "San Diego",
+        "latitude": 32.7338,
+        "longitude": -117.1933,
+        "timezone": "America/Los_Angeles"
+      },
+      {
+        "iata": "IAD",
+        "icao": "KIAD",
+        "name": "Washington Dulles",
+        "latitude": 38.9531,
+        "longitude": -77.4565,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "TPA",
+        "icao": "KTPA",
+        "name": "Tampa",
+        "latitude": 27.9755,
+        "longitude": -82.5332,
+        "timezone": "America/New_York"
+      },
+      {
+        "iata": "BNA",
+        "icao": "KBNA",
+        "name": "Nashville",
+        "latitude": 36.1263,
+        "longitude": -86.6774,
+        "timezone": "America/Chicago"
+      },
+      {
+        "iata": "AUS",
+        "icao": "KAUS",
+        "name": "Austin-Bergstrom",
+        "latitude": 30.1975,
+        "longitude": -97.6664,
+        "timezone": "America/Chicago"
+      },
+      {
+        "iata": "MDW",
+        "icao": "KMDW",
+        "name": "Chicago Midway",
+        "latitude": 41.7868,
+        "longitude": -87.7522,
+        "timezone": "America/Chicago"
+      }
+    ]
+  },
+  "bts": {
+    "comment": [
+      "Reporting Carrier On-Time Performance, one zip per month.",
+      "Only the columns below are kept; the published file has over 100."
+    ],
+    "url_template": "https://transtats.bts.gov/PREZIP/On_Time_Reporting_Carrier_On_Time_Performance_1987_present_{year}_{month}.zip",
+    "columns": [
+      "FlightDate",
+      "Reporting_Airline",
+      "Tail_Number",
+      "Flight_Number_Reporting_Airline",
+      "Origin",
+      "Dest",
+      "CRSDepTime",
+      "DepTime",
+      "DepDelay",
+      "DepDel15",
+      "TaxiOut",
+      "WheelsOff",
+      "WheelsOn",
+      "TaxiIn",
+      "CRSArrTime",
+      "ArrTime",
+      "ArrDelay",
+      "ArrDel15",
+      "Cancelled",
+      "CancellationCode",
+      "Diverted",
+      "CRSElapsedTime",
+      "ActualElapsedTime",
+      "Distance",
+      "CarrierDelay",
+      "WeatherDelay",
+      "NASDelay",
+      "SecurityDelay",
+      "LateAircraftDelay"
+    ]
+  },
+  "opensky": {
+    "comment": [
+      "Flights by airport are historical (previous day or earlier) and limited",
+      "to two days per request. State vectors are live only: anonymous calls",
+      "ignore `time`, authenticated ones reach back one hour. A states archive",
+      "therefore has to be collected going forward."
+    ],
+    "api_base": "https://opensky-network.org/api",
+    "token_url": "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token",
+    "flights_chunk_hours": 24,
+    "states_bbox": {
+      "lamin": 24.0,
+      "lomin": -125.0,
+      "lamax": 50.0,
+      "lomax": -66.0
+    },
+    "states_poll_seconds": 300,
+    "hub_radius_km": 40,
+    "stale_position_seconds": 60
+  },
+  "hrrr": {
+    "comment": [
+      "HRRR CONUS surface fields at the grid point nearest each hub.",
+      "One GRIB message covers all 30 hubs, so cost scales with",
+      "cycles x leads x fields, not with hubs.",
+      "available_after_minutes: a cycle is usually on the archive about",
+      "an hour after its nominal time; a forecast made at time t may only use",
+      "cycles whose init_time + this lag is at or before t."
+    ],
+    "url_template": "https://noaa-hrrr-bdp-pds.s3.amazonaws.com/hrrr.{day}/conus/hrrr.t{cycle}z.wrfsfcf{lead:02d}.grib2",
+    "cycle_hours_utc": [
+      0,
+      3,
+      6,
+      9,
+      12,
+      15,
+      18,
+      21
+    ],
+    "leads": [
+      0,
+      2,
+      4,
+      6
+    ],
+    "available_after_minutes": 60,
+    "fields": [
+      {
+        "name": "REFC",
+        "level": "entire atmosphere"
+      },
+      {
+        "name": "VIS",
+        "level": "surface"
+      },
+      {
+        "name": "GUST",
+        "level": "surface"
+      },
+      {
+        "name": "TMP",
+        "level": "2 m above ground"
+      },
+      {
+        "name": "UGRD",
+        "level": "10 m above ground"
+      },
+      {
+        "name": "VGRD",
+        "level": "10 m above ground"
+      },
+      {
+        "name": "PRATE",
+        "level": "surface"
+      },
+      {
+        "name": "HGT",
+        "level": "cloud ceiling"
+      }
+    ]
+  }
+}
