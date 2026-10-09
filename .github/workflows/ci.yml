@@ -1,0 +1,145 @@
+name: CI
+
+# Pull requests are the gate; pushes to main catch anything that reached the
+# trunk another way. Feature branches are covered through their pull request
+# rather than on every push, which keeps the queue short.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push to the same branch supersedes the run in flight.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # The project pins exact dependency versions and targets one interpreter, so
+  # a matrix would test a configuration nobody runs.
+  PYTHON_VERSION: "3.14"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # Only ruff, at the version requirements.txt pins. Installing the full
+      # dependency set to run a linter would cost minutes per run, and reading
+      # the pin from the file means CI cannot drift from local.
+      - name: Install ruff
+        run: pip install "$(grep '^ruff==' requirements.txt)"
+
+      - name: Check formatting
+        run: ruff format --check src tests
+
+      - name: Check lint rules
+        run: ruff check --output-format=github src tests
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # The generated datasets are not in the repository, so the suite has to
+      # stand on its own fixtures. It does: every test builds the data it
+      # needs, which is what makes this job meaningful here at all.
+      - name: Run tests
+        run: pytest -q
+
+      # The entry points are the one part of the codebase the suite does not
+      # reach. Parsing their arguments is enough to catch a broken import or a
+      # malformed flag, which is the failure mode that would otherwise only
+      # surface when somebody ran the pipeline by hand.
+      #
+      # The modules are discovered rather than listed. A hand-kept list is a
+      # serialization point: every branch that adds a model edits the same
+      # line, so three in a row conflicted here, and run_xgboost_rolling was
+      # simply never added to it and went unchecked for as long as it existed.
+      # Anything with a __main__ block is an entry point by definition, so
+      # that is the question asked.
+      - name: Check command-line entry points
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          modules="$(grep -rl '^if __name__ == "__main__":' src --include='*.py' \
+            | sed 's|^src/||; s|\.py$||; s|/|.|g' | sort)"
+          # An empty result would pass a loop that never runs, reporting a
+          # green check for nothing tested. If the convention ever changes,
+          # this should fail loudly instead.
+          if [ -z "$modules" ]; then
+            echo "::error::No __main__ modules found under src/; the discovery is broken."
+            exit 1
+          fi
+          echo "Discovered $(echo "$modules" | wc -l | tr -d ' ') entry point(s)."
+          for module in $modules
+          do
+            echo "::group::$module --help"
+            python -m "$module" --help
+            echo "::endgroup::"
+          done
+
+  commits:
+    name: Commit messages
+    # Only a pull request has a range of commits to check; a push to main has
+    # already been through one.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # rev-list needs the history back to the merge base.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install pre-commit
+        run: pip install "$(grep '^pre-commit==' requirements.txt)"
+
+      # Run the repository's own commit-msg hook rather than a second linter
+      # configured separately, so CI cannot disagree with what the hook allows
+      # locally.
+      - name: Check every commit in the pull request
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          message_file="$(mktemp)"
+          failed=0
+          for sha in $(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA"); do
+            git log -1 --format=%B "$sha" > "$message_file"
+            subject="$(git log -1 --format=%s "$sha")"
+            if pre-commit run commitlint \
+                 --hook-stage commit-msg \
+                 --commit-msg-filename "$message_file" >/dev/null 2>&1; then
+              echo "ok   ${sha:0:8}  $subject"
+            else
+              echo "::error::${sha:0:8} has a non-conforming message: $subject"
+              failed=1
+            fi
+          done
+          exit "$failed"

@@ -1,0 +1,13 @@
+.VENV/
+.env
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+
+# Generated datasets. BTS months are tens of megabytes each and re-downloadable;
+# HRRR and OpenSky are rebuilt by the ingestion modules.
+data/raw/**/*.csv*
+data/raw/**/*.zip
+data/processed/**/*.parquet
+data/processed/**/*.csv
