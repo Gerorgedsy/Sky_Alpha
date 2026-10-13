@@ -154,6 +154,20 @@ historical features, never live inputs.
 
 ## Baseline models
 
+The two baselines also have separate, directly runnable entry points:
+
+- [`baseline_1_schedule.py`](src/skydelay/models/baseline_1_schedule.py):
+  schedule-only logistic regression;
+- [`baseline_2_schedule_weather.py`](src/skydelay/models/baseline_2_schedule_weather.py):
+  schedule plus point-in-time HRRR logistic regression.
+
+Run either model independently with:
+
+```bash
+PYTHONPATH=src python -m skydelay.models.baseline_1_schedule
+PYTHONPATH=src python -m skydelay.models.baseline_2_schedule_weather
+```
+
 After cleaning BTS and HRRR data, train and compare both two-hour pilot
 baselines with:
 
