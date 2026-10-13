@@ -7,7 +7,24 @@ forecasts instead of lagging airline reports.
 
 ## Team
 
-- TODO
+- Debshree Chowdhury
+- George Deng
+
+## Mid-semester status
+
+The ingestion and cleaning pipeline is implemented for BTS, NOAA HRRR and
+OpenSky. The repository now also includes:
+
+- a leakage-safe schedule feature table;
+- a schedule-only logistic-regression baseline with a temporal holdout;
+- a probability-focused evaluation scorecard;
+- a no-install pilot dashboard under `demo/`;
+- the project definitions, research plan and risks in
+  [`docs/midsemester.md`](docs/midsemester.md).
+
+The demo uses clearly labeled illustrative scenarios. It does not report
+trained-model performance. Real metrics are written only after running the
+baseline against cleaned BTS data.
 
 ## Project scope
 
@@ -40,6 +57,8 @@ available from OpenSky's flights-by-airport data, and taxi-out times from BTS.
 - `src/skydelay/pipeline/`: ingestion and cleaning
 - `src/skydelay/features/`: feature engineering (spatial grid, taxi-out delta, sector density)
 - `src/skydelay/models/`, `src/skydelay/evaluation/`: models and evaluation
+- `demo/`: interactive pilot risk board with threshold and fallback controls
+- `docs/midsemester.md`: customer discovery, data, modeling, evaluation and risk plan
 - `config/sources.json`: hubs (codes, coordinates, timezones), study window, source settings
 - `tests/unit/`, `tests/integration/`: tests, runnable offline
 - `data/raw/`, `data/processed/`: downloaded and cleaned data (not committed)
@@ -131,3 +150,27 @@ historical features, never live inputs.
   outputs and the screening report.
 - Confirm the HRRR `available_after_minutes` lag against when cycles actually
   appear in the archive.
+
+## Schedule baseline
+
+After cleaning BTS data, train the first two-hour pilot baseline with:
+
+```bash
+PYTHONPATH=src python -m skydelay.models.train_baseline \
+  --flights data/processed/flights.parquet \
+  --test-days 30
+```
+
+The final 30 days form the holdout. The command writes the fitted model to
+`artifacts/models/` and a JSON scorecard to `artifacts/metrics/`. The scorecard
+includes Brier score, calibration error, PR-AUC, recall, precision, F1,
+accuracy and a naive-prevalence Brier benchmark.
+
+## Pilot demo
+
+Open [`demo/index.html`](demo/index.html) in any browser. Select ATL, ORD or
+JFK, adjust the alert threshold, and simulate an ADS-B outage to inspect the
+weather-only fallback state.
+
+The probabilities are representative UI-test scenarios until trained model
+artifacts are connected.
