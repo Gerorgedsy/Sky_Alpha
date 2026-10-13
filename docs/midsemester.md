@@ -64,24 +64,38 @@ summary.
 These features are known before the two-hour prediction cutoff. Actual times,
 taxi times, cancellations and delay causes are excluded from the feature set.
 
-### Planned weather and movement features
+### Implemented weather features
 
 - latest HRRR forecast available by the prediction cutoff;
-- wind components relative to runway orientation;
+- wind speed and circular wind-direction encoding;
 - visibility, ceiling, reflectivity and precipitation;
+- temperature and gust speed;
+- forecast age, lead time and an explicit availability flag.
+
+The point-in-time join rounds each departure to the nearest forecast hour,
+checks neighboring hours, and selects the closest valid time from the newest
+cycle available at the cutoff. Flights without a valid weather match remain in
+the table so both baselines use the same evaluation rows.
+
+### Planned movement features
+
 - historical OpenSky arrival/departure counts;
 - live surface and terminal-aircraft density once enough states are archived.
 
 ## Baselines and model development
 
 1. **Naive prevalence:** predict the training-period delayed-departure rate.
-2. **Schedule baseline:** logistic regression using the implemented schedule
-   features. This model is now implemented and can be trained with
-   `python -m skydelay.models.train_baseline` after cleaned BTS data exists.
-3. **Schedule plus weather:** add point-in-time HRRR features to measure the
-   value of weather.
+2. **Baseline 1, schedule:** logistic regression using the implemented schedule
+   features.
+3. **Baseline 2, schedule plus weather:** the same logistic regression and
+   holdout rows with leakage-safe HRRR features added.
 4. **Full model:** evaluate gradient-boosted trees after movement features are
    available. Compare its lift with both baselines before adopting it.
+
+Both baselines are implemented in `skydelay.models.train_baseline`. The CLI
+writes both serialized pipelines and a single comparison scorecard. Actual
+performance values require a cleaned real-data run and are not inferred from
+the synthetic unit-test fixtures.
 
 The final model must support calibrated probabilities. Feature-contribution
 views are a product requirement, but a specific explanation method will be
@@ -113,8 +127,8 @@ probabilities are explicitly marked illustrative.
 ## Next steps
 
 1. Complete a small real-data ingestion run and audit the screening report.
-2. Build the three-airport modeling table and run the schedule baseline.
-3. Add point-in-time HRRR joins and compare the weather baseline.
+2. Run both implemented baselines on the three-airport modeling table.
+3. Audit weather match coverage and compare Baseline 2 with Baseline 1.
 4. Conduct and summarize customer interviews.
 5. Add the historical movement proxy and test its incremental lift.
 6. Calibrate the strongest model and connect it to the pilot interface.
@@ -131,4 +145,3 @@ probabilities are explicitly marked illustrative.
 | Coverage differs across hubs and weather conditions | Aggregate metrics can hide weak locations | Report missingness and calibration by hub |
 | High recall may cause alert fatigue | Analysts may ignore the product | Let users set a threshold and evaluate recall at an alert budget |
 | External APIs can rate-limit or change schema | Pipeline interruption | Retain raw files, validate schemas and provide fallback modes |
-

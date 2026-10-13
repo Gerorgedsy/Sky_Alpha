@@ -62,6 +62,7 @@ def probability_scorecard(
     *,
     threshold: float = 0.5,
     calibration_bins: int = 10,
+    naive_probability: float | None = None,
 ) -> dict[str, Any]:
     """Compute the pilot scorecard on held-out labels and probabilities."""
     truth = np.asarray(y_true, dtype=int)
@@ -70,7 +71,11 @@ def probability_scorecard(
         raise ValueError("threshold must be between 0 and 1")
     predicted = probability >= threshold
     prevalence = float(truth.mean())
-    naive_probability = np.full(len(truth), prevalence)
+    if naive_probability is None:
+        naive_probability = prevalence
+    if not 0 <= naive_probability <= 1:
+        raise ValueError("naive_probability must be between 0 and 1")
+    naive_prediction = np.full(len(truth), naive_probability)
 
     # ROC-AUC is undefined when a holdout contains only one class.  Returning
     # None makes the limitation explicit in the JSON artifact.
@@ -94,7 +99,8 @@ def probability_scorecard(
         "roc_auc": roc_auc,
         "pr_auc": pr_auc,
         "brier_score": float(brier_score_loss(truth, probability)),
-        "naive_brier_score": float(brier_score_loss(truth, naive_probability)),
+        "naive_probability": float(naive_probability),
+        "naive_brier_score": float(brier_score_loss(truth, naive_prediction)),
         "expected_calibration_error": expected_calibration_error(
             truth, probability, bins=calibration_bins
         ),

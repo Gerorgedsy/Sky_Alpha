@@ -16,7 +16,8 @@ The ingestion and cleaning pipeline is implemented for BTS, NOAA HRRR and
 OpenSky. The repository now also includes:
 
 - a leakage-safe schedule feature table;
-- a schedule-only logistic-regression baseline with a temporal holdout;
+- schedule-only and schedule-plus-weather logistic-regression baselines with a
+  shared temporal holdout;
 - a probability-focused evaluation scorecard;
 - a no-install pilot dashboard under `demo/`;
 - the project definitions, research plan and risks in
@@ -151,20 +152,28 @@ historical features, never live inputs.
 - Confirm the HRRR `available_after_minutes` lag against when cycles actually
   appear in the archive.
 
-## Schedule baseline
+## Baseline models
 
-After cleaning BTS data, train the first two-hour pilot baseline with:
+After cleaning BTS and HRRR data, train and compare both two-hour pilot
+baselines with:
 
 ```bash
 PYTHONPATH=src python -m skydelay.models.train_baseline \
+  --baseline both \
   --flights data/processed/flights.parquet \
+  --weather data/processed/weather.parquet \
   --test-days 30
 ```
 
-The final 30 days form the holdout. The command writes the fitted model to
-`artifacts/models/` and a JSON scorecard to `artifacts/metrics/`. The scorecard
-includes Brier score, calibration error, PR-AUC, recall, precision, F1,
-accuracy and a naive-prevalence Brier benchmark.
+Baseline 1 uses schedule, route, calendar and recent scheduled-departure
+density. Baseline 2 adds the newest HRRR forecast available at the two-hour
+cutoff. The join rejects weather cycles published after the cutoff and retains
+an explicit availability flag when no eligible forecast exists.
+
+The final 30 days form the shared holdout. The command writes two fitted models
+to `artifacts/models/` and a comparison scorecard to `artifacts/metrics/`.
+The scorecard includes Brier score, calibration error, PR-AUC, recall,
+precision, F1, accuracy, weather coverage and improvement over Baseline 1.
 
 ## Pilot demo
 
