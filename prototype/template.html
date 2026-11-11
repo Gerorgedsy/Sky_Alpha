@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SkyDelay · 航班延误预测</title>
+<style>
+  :root{
+    --bg:#fff; --fg:#0b0b0c; --muted:#8a8d93; --line:#f0f1f3; --panel:#f6f7f8;
+    --green:#22b14c; --amber:#f0a020; --red:#e5484d; --chip:#fff4dc; --chip-fg:#c88a12;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0;background:#eceef1}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;color:var(--fg);-webkit-font-smoothing:antialiased}
+  .app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--bg);position:relative;padding-bottom:40px}
+  header{position:sticky;top:0;z-index:10;background:var(--bg);padding:14px 18px 10px}
+  .topbar{display:flex;align-items:center;justify-content:space-between}
+  .logo{font-weight:800;font-size:19px;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+  .logo i{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--fg);color:#fff;font-style:normal;font-size:15px}
+  .seg{display:flex;background:var(--panel);border-radius:999px;padding:3px}
+  .seg button{border:0;background:transparent;padding:7px 16px;border-radius:999px;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer}
+  .seg button.on{background:#fff;color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .search{margin-top:12px;display:flex;gap:8px}
+  .field{flex:1;display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:999px;padding:0 14px;height:42px;min-width:0}
+  .field svg{flex:none;opacity:.5}
+  .field input,.field select{border:0;background:transparent;outline:none;font-size:15px;width:100%;color:var(--fg);font-family:inherit;min-width:0}
+  .field select{appearance:none;-webkit-appearance:none;font-weight:600}
+  .swap{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:var(--panel);font-size:18px;cursor:pointer}
+  .dates{display:flex;gap:8px;overflow-x:auto;padding:12px 18px 2px;scrollbar-width:none}
+  .dates::-webkit-scrollbar{display:none}
+  .date{flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px;text-align:center;cursor:pointer;min-width:52px}
+  .date b{display:block;font-size:15px}
+  .date span{font-size:11px;color:var(--muted)}
+  .date.on{background:var(--fg);border-color:var(--fg);color:#fff}
+  .date.on span{color:#c9cbd0}
+  main{padding:0 18px}
+  h2{font-size:21px;margin:22px 0 4px;font-weight:800}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 6px}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .card{background:var(--panel);border-radius:12px;padding:12px}
+  .card .k{font-size:12px;color:var(--muted)}
+  .card .v{font-size:19px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+  .card .d{font-size:12px;margin-top:2px;color:var(--muted)}
+  .colhead{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;padding:14px 0 4px;border-bottom:1px solid var(--line)}
+  .colhead>span:last-child{display:flex;gap:12px}
+  .colhead .c1{width:84px;text-align:right}
+  .colhead .c2{width:100px;text-align:center}
+  .row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .row:active{background:#fafafa}
+  .ico{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;letter-spacing:-.3px}
+  .main{flex:1;min-width:0}
+  .t1{display:flex;align-items:center;gap:6px;font-size:17px;font-weight:700;white-space:nowrap}
+  .tag{font-size:11px;font-weight:600;background:var(--chip);color:var(--chip-fg);padding:2px 6px;border-radius:5px}
+  .t2{font-size:13px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mid{flex:none;width:84px;text-align:right}
+  .mid .a{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+  .mid .b{font-size:12px;color:var(--muted);margin-top:3px}
+  .pill{flex:none;width:100px;height:40px;border-radius:9px;color:#fff;font-weight:700;font-size:17px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+  .g{background:var(--green)} .y{background:var(--amber)} .r{background:var(--red)}
+  .more{display:block;width:100%;margin:16px 0 0;height:48px;border:0;border-radius:999px;background:var(--panel);font-size:16px;font-weight:700;cursor:pointer}
+  .empty{color:var(--muted);text-align:center;padding:40px 0;font-size:14px}
+  .note{margin-top:26px;background:var(--panel);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--muted);line-height:1.7}
+  .note b{color:var(--fg)}
+  .legend{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  /* detail sheet */
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:30;display:none}
+  .sheet{position:fixed;left:50%;transform:translate(-50%,100%);bottom:0;width:100%;max-width:480px;background:#fff;border-radius:20px 20px 0 0;z-index:31;padding:10px 20px 28px;transition:transform .25s ease;max-height:88vh;overflow:auto}
+  .sheet.open{transform:translate(-50%,0)}
+  .grab{width:40px;height:5px;border-radius:3px;background:#dcdee2;margin:0 auto 14px}
+  .dh{display:flex;align-items:center;gap:12px}
+  .dh .t1{font-size:22px}
+  .dh>div:last-child{min-width:0}
+  .dh .t2{white-space:normal}
+  .big{display:flex;align-items:baseline;gap:8px;margin-top:18px}
+  .big .n{font-size:40px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+  .big .u{font-size:15px;color:var(--muted)}
+  .range{margin-top:16px}
+  .bar{position:relative;height:8px;border-radius:4px;background:var(--panel);margin:22px 0 6px}
+  .bar .seg2{position:absolute;top:0;height:8px;border-radius:4px;background:#cfe9d7}
+  .bar .dot{position:absolute;top:-5px;width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transform:translateX(-50%)}
+  .bar .lab{position:absolute;top:-22px;transform:translateX(-50%);font-size:11px;color:var(--muted);white-space:nowrap}
+  .ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+  .sec{margin-top:22px;font-weight:700;font-size:15px}
+  .drv{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px}
+  .drv span:first-child{flex:1}
+  .drv .bb{width:110px;height:8px;background:var(--panel);border-radius:4px;position:relative;overflow:hidden}
+  .drv .bb i{position:absolute;top:0;bottom:0}
+  .drv b{width:62px;text-align:right;font-variant-numeric:tabular-nums}
+  .bt{margin-top:22px;border:1px dashed #dcdee2;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6}
+  .ok{color:var(--green);font-weight:700} .bad{color:var(--red);font-weight:700}
+  @media (max-width:380px){ .mid{width:72px} .pill{width:84px;font-size:15px} .colhead .c1{width:72px} .colhead .c2{width:84px} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="topbar">
+      <div class="logo"><i>✈</i>SkyDelay</div>
+      <div class="seg" role="tablist">
+        <button id="tabFlight" class="on" role="tab">航班号</button>
+        <button id="tabRoute" role="tab">航线</button>
+      </div>
+    </div>
+    <div class="search" id="searchFlight">
+      <label class="field"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="qFlight" placeholder="搜索航班号，如 DL393 / B6 1131" autocomplete="off" inputmode="text"></label>
+    </div>
+    <div class="search" id="searchRoute" hidden>
+      <label class="field" style="flex:.8"><select id="qFrom" aria-label="出发地"></select></label>
+      <button class="swap" id="clearRoute" title="清空目的地">⇄</button>
+      <label class="field"><input id="qTo" list="destList" placeholder="目的地，如 ATL / Miami" autocomplete="off"></label>
+      <datalist id="destList"></datalist>
+    </div>
+  </header>
+
+  <div class="dates" id="dates"></div>
+
+  <main>
+    <div id="overview">
+      <h2>今日概况</h2>
+      <div class="cards" id="cards"></div>
+    </div>
+
+    <h2 id="listTitle">延误风险最高</h2>
+    <p class="sub" id="listSub"></p>
+    <div class="colhead"><span>航班 / 航线</span><span><span class="c1">预测可信度</span><span class="c2">预计延误</span></span></div>
+    <div id="list"></div>
+    <button class="more" id="more" hidden>查看更多</button>
+
+    <div class="legend">
+      <span><i style="background:var(--green)"></i>准点（≤5分钟）</span>
+      <span><i style="background:var(--amber)"></i>轻度延误（6–20分钟）</span>
+      <span><i style="background:var(--red)"></i>明显延误（&gt;20分钟）</span>
+    </div>
+
+    <div class="note">
+      <b>怎么读：</b>"预计延误"是在计划起飞前2小时做出的预测（中位数）；"预测可信度"是实际延误落在预计值 ±<span id="tolTxt">15</span> 分钟以内的概率，已用历史数据校准。点开航班可以看到延误区间、主要影响因素和回测结果。<br>
+      <b>数据：</b>这是原型演示，回放的是2023年12月纽约 EWR / JFK / LGA 出发航班（来源 BTS 与机场实测天气），并不是实时数据。模型只用起飞前2小时已经能拿到的信息。<br>
+      <b>模型表现（2023年11–12月回测）：</b><span id="evalTxt"></span>
+    </div>
+  </main>
+</div>
+
+<div class="mask" id="mask"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div id="sheetBody"></div></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const COLS = DATA.cols; const idx = Object.fromEntries(COLS.map((c, i) => [c, i]));
+const F = DATA.rows.map((r) => Object.fromEntries(COLS.map((c) => [c, r[idx[c]]])));
+F.forEach((f) => { f.code = f.carrier + f.flight; });
+const AP = DATA.airports, AL = DATA.airlines, TOL = DATA.tol;
+const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+const dates = [...new Set(F.map((f) => f.date))].sort();
+let state = { tab: 'flight', date: dates[0], page: 1 };
+const PAGE = 20;
+const $ = (s) => document.querySelector(s);
+
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+const sign = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
+const tone = (n) => (n <= 5 ? 'g' : n <= 20 ? 'y' : 'r');
+function hue(s) { let h = 0; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) % 360; return `hsl(${h} 55% 38%)`; }
+function shortAp(code) { const n = AP[code] || code; return n.replace(/ International| Intl| Airport| Regional|Municipal/gi, '').trim(); }
+
+// ---------- dates ----------
+function renderDates() {
+  const box = $('#dates'); box.replaceChildren();
+  dates.forEach((d) => {
+    const [m, dd] = d.split('-').map(Number);
+    const wd = WEEK[new Date(Date.UTC(2023, m - 1, dd)).getUTCDay()];
+    const b = el('button', 'date' + (d === state.date ? ' on' : ''));
+    b.append(el('b', null, `${m}/${dd}`), el('span', null, wd));
+    b.onclick = () => { state.date = d; state.page = 1; render(); };
+    box.append(b);
+  });
+}
+
+// ---------- route selectors ----------
+function initRoute() {
+  const sel = $('#qFrom');
+  [['ALL', '纽约全部机场'], ['EWR', 'EWR 纽瓦克'], ['JFK', 'JFK 肯尼迪'], ['LGA', 'LGA 拉瓜迪亚']].forEach(([v, t]) => sel.append(new Option(t, v)));
+  const dl = $('#destList');
+  [...new Set(F.map((f) => f.dest))].sort().forEach((c) => { const o = document.createElement('option'); o.value = c; o.label = AP[c] || c; o.textContent = `${c} · ${AP[c] || ''}`; dl.append(o); });
+}
+function matchDest(q, code) {
+  if (!q) return false;
+  q = q.trim().toLowerCase();
+  const head = q.split(/[\s·]/)[0];
+  if (head.length === 3 && code.toLowerCase() === head) return true;
+  return (AP[code] || '').toLowerCase().includes(q);
+}
+function parseFlight(q) {
+  q = q.toUpperCase().replace(/\s+/g, '');
+  const m = q.match(/^([A-Z0-9]{2})?(\d{1,4})$/) || q.match(/^([A-Z]{2})(\d{0,4})$/);
+  if (!m) return null; return { carrier: m[1] || null, num: m[2] || '' };
+}
+
+// ---------- overview ----------
+function renderCards(day) {
+  const c = $('#cards'); c.replaceChildren();
+  const avg = day.reduce((s, f) => s + f.pred, 0) / Math.max(day.length, 1);
+  const risky = day.filter((f) => f.hi >= 60).length / Math.max(day.length, 1);
+  const conf = day.reduce((s, f) => s + f.conf, 0) / Math.max(day.length, 1);
+  [['航班数', day.length.toLocaleString(), '计划出发'], ['平均预计延误', `${avg >= 0 ? '+' : '−'}${Math.abs(avg).toFixed(1)}分`, '中位数预测'],
+   ['高风险航班', `${(risky * 100).toFixed(1)}%`, '最坏情况超60分']].forEach(([k, v, d]) => {
+    const card = el('div', 'card'); card.append(el('div', 'k', k), el('div', 'v', v), el('div', 'd', d)); c.append(card);
+  });
+}
+
+// ---------- list ----------
+function row(f) {
+  const r = el('div', 'row'); r.tabIndex = 0;
+  const ico = el('div', 'ico', f.carrier); ico.style.background = hue(f.carrier);
+  const main = el('div', 'main');
+  const t1 = el('div', 't1'); t1.append(el('span', null, `${f.carrier} ${f.flight}`), el('span', 'tag', `${f.origin}→${f.dest}`));
+  main.append(t1, el('div', 't2', `${f.time} 起飞 · ${shortAp(f.dest)}`));
+  const mid = el('div', 'mid'); mid.append(el('div', 'a', `${f.conf}%`), el('div', 'b', `最坏 ${sign(f.hi)}分`));
+  const pill = el('div', 'pill ' + tone(f.pred), `${sign(f.pred)} 分钟`);
+  r.append(ico, main, mid, pill);
+  r.onclick = () => openSheet(f); r.onkeydown = (e) => { if (e.key === 'Enter') openSheet(f); };
+  return r;
+}
+function renderList(items, title, sub) {
+  $('#listTitle').textContent = title; $('#listSub').textContent = sub;
+  const box = $('#list'); box.replaceChildren();
+  if (!items.length) { box.append(el('div', 'empty', '没有找到匹配的航班')); $('#more').hidden = true; return; }
+  items.slice(0, state.page * PAGE).forEach((f) => box.append(row(f)));
+  $('#more').hidden = items.length <= state.page * PAGE;
+}
+
+function render() {
+  renderDates();
+  const day = F.filter((f) => f.date === state.date);
+  renderCards(day);
+  const [m, d] = state.date.split('-').map(Number); const dlabel = `${m}月${d}日`;
+  if (state.tab === 'flight') {
+    const q = $('#qFlight').value.trim();
+    if (!q) {
+      const items = [...day].sort((a, b) => b.pred - a.pred || b.hi - a.hi);
+      return renderList(items, '延误风险最高', `${dlabel} · 按预计延误从高到低`);
+    }
+    const p = parseFlight(q);
+    const items = p ? day.filter((f) => (!p.carrier || f.carrier === p.carrier) && String(f.flight).startsWith(p.num)) : [];
+    items.sort((a, b) => a.time.localeCompare(b.time));
+    return renderList(items, `搜索 "${q.toUpperCase()}"`, `${dlabel} · 找到 ${items.length} 个航班`);
+  }
+  const from = $('#qFrom').value, to = $('#qTo').value;
+  if (!to.trim()) {
+    renderList([], '按航线查询', '选择出发地并输入目的地机场代码或城市名');
+    $('#list').replaceChildren(el('div', 'empty', '输入目的地，例如 ATL、Orlando、LAX'));
+    return;
+  }
+  const items = day.filter((f) => (from === 'ALL' || f.origin === from) && matchDest(to, f.dest))
+    .sort((a, b) => a.pred - b.pred || b.conf - a.conf || a.time.localeCompare(b.time));
+  const dests = [...new Set(items.map((f) => f.dest))];
+  const label = dests.length === 1 ? `${dests[0]} ${shortAp(dests[0])}` : to;
+  renderList(items, `${from === 'ALL' ? '纽约' : from} → ${label}`, `${dlabel} · ${items.length} 个航班 · 按预计延误从短到长`);
+}
+
+// ---------- detail ----------
+function openSheet(f) {
+  const b = $('#sheetBody'); b.replaceChildren();
+  const dh = el('div', 'dh'); const ico = el('div', 'ico', f.carrier); ico.style.background = hue(f.carrier);
+  const tt = el('div'); const t1 = el('div', 't1'); t1.append(el('span', null, `${f.carrier} ${f.flight}`), el('span', 'tag', `${f.origin}→${f.dest}`));
+  tt.append(t1, el('div', 't2', `${AL[f.carrier] || f.carrier} · ${f.date.replace('-', '月')}日 ${f.time} · ${shortAp(f.dest)}`));
+  dh.append(ico, tt); b.append(dh);
+
+  const big = el('div', 'big'); const n = el('span', 'n', sign(f.pred)); n.style.color = `var(--${{ g: 'green', y: 'amber', r: 'red' }[tone(f.pred)]})`;
+  big.append(n, el('span', 'u', '分钟 · 预计延误'));
+  b.append(big);
+
+  // range bar
+  const lo = Math.min(-15, f.lo, f.actual ?? 0), hi = Math.max(60, f.hi, Math.min(f.actual ?? 0, 300)) ;
+  const pos = (v) => `${((Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * 100}%`;
+  const rg = el('div', 'range'); rg.append(el('div', 'sub', `80% 区间：${sign(f.lo)} ~ ${sign(f.hi)} 分钟`));
+  const bar = el('div', 'bar'); const s = el('div', 'seg2'); s.style.left = pos(f.lo); s.style.width = `calc(${pos(f.hi)} - ${pos(f.lo)})`;
+  const dot = el('div', 'dot'); dot.style.left = pos(f.pred); dot.style.background = `var(--${{ g: 'green', y: 'amber', r: 'red' }[tone(f.pred)]})`;
+  const lab = el('div', 'lab', '预测'); lab.style.left = pos(f.pred);
+  bar.append(s, dot, lab);
+  if (f.actual != null) { const a = el('div', 'dot'); a.style.left = pos(f.actual); a.style.background = 'var(--fg)'; const al = el('div', 'lab', '实际'); al.style.left = pos(f.actual); al.style.top = '14px'; bar.append(a, al); }
+  const ticks = el('div', 'ticks'); ticks.style.marginTop = f.actual != null ? '22px' : '0'; ticks.append(el('span', null, `${sign(lo)}分`), el('span', null, `${sign(hi)}分`));
+  rg.append(bar, ticks); b.append(rg);
+
+  const kv = el('div', 'kv');
+  [['预测可信度', `${f.conf}%`, `实际落在 ±${TOL} 分钟内的概率`], ['最坏情况', `${sign(f.hi)} 分钟`, '90% 分位预测']].forEach(([k, v, d]) => {
+    const c = el('div', 'card'); c.append(el('div', 'k', k), el('div', 'v', v), el('div', 'd', d)); kv.append(c);
+  });
+  b.append(kv);
+
+  b.append(el('div', 'sec', '主要影响因素'));
+  b.append(el('div', 'sub', '相对平均水平，每个因素把预测推高（红）或拉低（绿）了多少分钟'));
+  const mx = Math.max(...f.drivers.map((d) => Math.abs(d[1])), 1);
+  f.drivers.forEach(([name, v]) => {
+    const r = el('div', 'drv'); const bb = el('span', 'bb'); const i = el('i');
+    i.style.width = `${(Math.abs(v) / mx) * 50}%`; i.style.background = v > 0 ? 'var(--red)' : 'var(--green)';
+    if (v > 0) i.style.left = '50%'; else i.style.right = '50%';
+    bb.append(i);
+    const val = el('b', null, `${v > 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}`); val.style.color = v > 0 ? 'var(--red)' : 'var(--green)';
+    r.append(el('span', null, name), bb, val); b.append(r);
+  });
+
+  const bt = el('div', 'bt');
+  if (f.actual == null) { bt.append(el('span', 'bad', '回测：该航班当天被取消')); }
+  else {
+    const err = f.actual - f.pred, hit = Math.abs(err) <= TOL;
+    bt.append(document.createTextNode(`回测：实际延误 ${sign(f.actual)} 分钟，预测误差 ${sign(err)} 分钟 · `), el('span', hit ? 'ok' : 'bad', hit ? `在 ±${TOL} 分钟内` : `超出 ±${TOL} 分钟`));
+  }
+  b.append(bt);
+  if (f.tail) b.append(el('div', 'sub', `机尾号 ${f.tail}`));
+  $('#mask').style.display = 'block'; requestAnimationFrame(() => $('#sheet').classList.add('open'));
+}
+function closeSheet() { $('#sheet').classList.remove('open'); setTimeout(() => { $('#mask').style.display = 'none'; }, 250); }
+$('#mask').onclick = closeSheet; document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+
+// ---------- wiring ----------
+function setTab(t) {
+  state.tab = t; state.page = 1;
+  $('#tabFlight').classList.toggle('on', t === 'flight'); $('#tabRoute').classList.toggle('on', t === 'route');
+  $('#searchFlight').hidden = t !== 'flight'; $('#searchRoute').hidden = t !== 'route';
+  render();
+}
+$('#tabFlight').onclick = () => setTab('flight'); $('#tabRoute').onclick = () => setTab('route');
+$('#qFlight').oninput = () => { state.page = 1; render(); };
+$('#qFrom').onchange = () => { state.page = 1; render(); };
+$('#qTo').oninput = () => { state.page = 1; render(); };
+$('#clearRoute').onclick = () => { $('#qTo').value = ''; render(); $('#qTo').focus(); };
+$('#more').onclick = () => { state.page += 1; render(); };
+
+const E = DATA.eval;
+$('#tolTxt').textContent = TOL;
+$('#evalTxt').textContent = `测试 ${E.test_flights.toLocaleString()} 个航班，平均绝对误差 ${E.mae_model.toFixed(1)} 分钟（只用航线和时刻的基线为 ${E.mae_schedule_only.toFixed(1)} 分钟）；${(E.hit15_model * 100).toFixed(0)}% 的航班误差在 ±${TOL} 分钟内；80% 区间实际覆盖 ${(E.interval80_coverage * 100).toFixed(0)}%。注意：中位数预测很少给出大延误，严重延误的风险请看"最坏"一栏。`;
+initRoute(); render();
+</script>
+</body>
+</html>
