@@ -68,11 +68,11 @@ for c in ['carrier', 'dest', 'origin']:
 FEATS = ['carrier_c', 'dest_c', 'origin_c', 'sched_hour', 'dow', 'distance', 'days_to_holiday',
          'st_mean_delay', 'st_share30', 'st_backlog', 'st_thr_ratio', 'st_sched_next4h', 'nyc_st_share30', 'nyc_st_backlog',
          'wx_wind', 'wx_gust', 'wx_vis', 'wx_precip', 'wx_temp', 'wx_dewsp', 'wx_ptend']
-NAMES = {'carrier_c': '航空公司', 'dest_c': '目的地', 'origin_c': '出发机场', 'sched_hour': '起飞时段', 'dow': '星期',
-         'distance': '航程', 'days_to_holiday': '临近假期', 'st_mean_delay': '机场当前平均延误', 'st_share30': '机场当前延误比例',
-         'st_backlog': '机场积压航班', 'st_thr_ratio': '机场放行效率', 'st_sched_next4h': '未来航班量',
-         'nyc_st_share30': '纽约整体延误', 'nyc_st_backlog': '纽约整体积压', 'wx_wind': '风速', 'wx_gust': '阵风',
-         'wx_vis': '能见度', 'wx_precip': '降水', 'wx_temp': '气温', 'wx_dewsp': '湿度（露点差）', 'wx_ptend': '气压变化'}
+NAMES = {'carrier_c': 'Airline', 'dest_c': 'Destination', 'origin_c': 'Origin airport', 'sched_hour': 'Departure time', 'dow': 'Day of week',
+         'distance': 'Distance', 'days_to_holiday': 'Holiday proximity', 'st_mean_delay': 'Current airport avg. delay', 'st_share30': 'Current airport delay share',
+         'st_backlog': 'Airport backlog', 'st_thr_ratio': 'Airport throughput', 'st_sched_next4h': 'Upcoming flight volume',
+         'nyc_st_share30': 'NYC-wide delays', 'nyc_st_backlog': 'NYC-wide backlog', 'wx_wind': 'Wind speed', 'wx_gust': 'Wind gusts',
+         'wx_vis': 'Visibility', 'wx_precip': 'Precipitation', 'wx_temp': 'Temperature', 'wx_dewsp': 'Humidity (dew-point spread)', 'wx_ptend': 'Pressure change'}
 
 ok = ~df.cancel
 df['y'] = df.dep_delay.clip(-30, 300)
