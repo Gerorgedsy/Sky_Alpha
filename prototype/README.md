@@ -11,7 +11,7 @@ The page is a single self-contained file (data is embedded); no server or build 
 ## Features
 - **Flight tab:** search a flight number (`DL393`, `B6 1131`, or just `393`). With an empty search, shows the day's highest-risk flights.
 - **Route tab:** pick a NYC origin (EWR / JFK / LGA / all) and type a destination code or city; results are sorted from shortest to longest predicted delay.
-- **Date chips:** Dec 18–31, 2023.
+- **Date chips:** Nov 18–24, 2023.
 - **Tap a flight:** 80% delay range, top 3 drivers (in minutes), and the backtest result (actual delay).
 
 ## What the numbers mean
