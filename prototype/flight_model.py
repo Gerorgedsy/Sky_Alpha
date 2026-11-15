@@ -132,7 +132,7 @@ expected = contrib[:, -1].mean()
 # ---- export demo window ----
 ap = pd.read_pickle('/home/claude/work_airports.pkl').set_index('faa').name.to_dict()
 al = pd.read_pickle('/home/claude/work_airlines.pkl').set_index('carrier').name.to_dict()
-sel = (te.date >= '2023-12-18').values
+sel = te.date.between('2023-11-18', '2023-11-24').values
 rows = []
 for i in np.where(sel)[0]:
     r = te.iloc[i]
