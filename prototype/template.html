@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SkyDelay · 航班延误预测</title>
+<title>SkyDelay · Flight Delay Forecast</title>
 <style>
   :root{
     --bg:#fff; --fg:#0b0b0c; --muted:#8a8d93; --line:#f0f1f3; --panel:#f6f7f8;
@@ -41,11 +41,12 @@
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
   .card{background:var(--panel);border-radius:12px;padding:12px}
   .card .k{font-size:12px;color:var(--muted)}
-  .card .v{font-size:19px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+  .card .v{font-size:19px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .card .k{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .card .d{font-size:12px;margin-top:2px;color:var(--muted)}
   .colhead{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;padding:14px 0 4px;border-bottom:1px solid var(--line)}
   .colhead>span:last-child{display:flex;gap:12px}
-  .colhead .c1{width:84px;text-align:right}
+  .colhead .c1{width:100px;text-align:right}
   .colhead .c2{width:100px;text-align:center}
   .row{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);cursor:pointer}
   .row:active{background:#fafafa}
@@ -54,9 +55,9 @@
   .t1{display:flex;align-items:center;gap:6px;font-size:17px;font-weight:700;white-space:nowrap}
   .tag{font-size:11px;font-weight:600;background:var(--chip);color:var(--chip-fg);padding:2px 6px;border-radius:5px}
   .t2{font-size:13px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mid{flex:none;width:84px;text-align:right}
+  .mid{flex:none;width:100px;text-align:right}
   .mid .a{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
-  .mid .b{font-size:12px;color:var(--muted);margin-top:3px}
+  .mid .b{font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap}
   .pill{flex:none;width:100px;height:40px;border-radius:9px;color:#fff;font-weight:700;font-size:17px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
   .g{background:var(--green)} .y{background:var(--amber)} .r{background:var(--red)}
   .more{display:block;width:100%;margin:16px 0 0;height:48px;border:0;border-radius:999px;background:var(--panel);font-size:16px;font-weight:700;cursor:pointer}
@@ -92,7 +93,7 @@
   .drv b{width:62px;text-align:right;font-variant-numeric:tabular-nums}
   .bt{margin-top:22px;border:1px dashed #dcdee2;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6}
   .ok{color:var(--green);font-weight:700} .bad{color:var(--red);font-weight:700}
-  @media (max-width:380px){ .mid{width:72px} .pill{width:84px;font-size:15px} .colhead .c1{width:72px} .colhead .c2{width:84px} }
+  @media (max-width:380px){ .mid{width:88px} .mid .b{font-size:11px} .pill{width:84px;font-size:15px} .colhead .c1{width:88px} .colhead .c2{width:84px} .card .v{font-size:17px} }
 </style>
 </head>
 <body>
@@ -101,18 +102,18 @@
     <div class="topbar">
       <div class="logo"><i>✈</i>SkyDelay</div>
       <div class="seg" role="tablist">
-        <button id="tabFlight" class="on" role="tab">航班号</button>
-        <button id="tabRoute" role="tab">航线</button>
+        <button id="tabFlight" class="on" role="tab">Flight</button>
+        <button id="tabRoute" role="tab">Route</button>
       </div>
     </div>
     <div class="search" id="searchFlight">
       <label class="field"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="qFlight" placeholder="搜索航班号，如 DL393 / B6 1131" autocomplete="off" inputmode="text"></label>
+        <input id="qFlight" placeholder="Search flight number, e.g. DL393 / B6 1131" autocomplete="off" inputmode="text"></label>
     </div>
     <div class="search" id="searchRoute" hidden>
-      <label class="field" style="flex:.8"><select id="qFrom" aria-label="出发地"></select></label>
-      <button class="swap" id="clearRoute" title="清空目的地">⇄</button>
-      <label class="field"><input id="qTo" list="destList" placeholder="目的地，如 ATL / Miami" autocomplete="off"></label>
+      <label class="field" style="flex:.8"><select id="qFrom" aria-label="Origin"></select></label>
+      <button class="swap" id="clearRoute" title="Clear destination">⇄</button>
+      <label class="field"><input id="qTo" list="destList" placeholder="Destination, e.g. ATL / Miami" autocomplete="off"></label>
       <datalist id="destList"></datalist>
     </div>
   </header>
@@ -121,26 +122,26 @@
 
   <main>
     <div id="overview">
-      <h2>今日概况</h2>
+      <h2>Today at a glance</h2>
       <div class="cards" id="cards"></div>
     </div>
 
-    <h2 id="listTitle">延误风险最高</h2>
+    <h2 id="listTitle">Highest delay risk</h2>
     <p class="sub" id="listSub"></p>
-    <div class="colhead"><span>航班 / 航线</span><span><span class="c1">预测可信度</span><span class="c2">预计延误</span></span></div>
+    <div class="colhead"><span>Flight / Route</span><span><span class="c1">Confidence</span><span class="c2">Predicted delay</span></span></div>
     <div id="list"></div>
-    <button class="more" id="more" hidden>查看更多</button>
+    <button class="more" id="more" hidden>Show more</button>
 
     <div class="legend">
-      <span><i style="background:var(--green)"></i>准点（≤5分钟）</span>
-      <span><i style="background:var(--amber)"></i>轻度延误（6–20分钟）</span>
-      <span><i style="background:var(--red)"></i>明显延误（&gt;20分钟）</span>
+      <span><i style="background:var(--green)"></i>On time (≤5 min)</span>
+      <span><i style="background:var(--amber)"></i>Minor delay (6–20 min)</span>
+      <span><i style="background:var(--red)"></i>Significant delay (&gt;20 min)</span>
     </div>
 
     <div class="note">
-      <b>怎么读：</b>"预计延误"是在计划起飞前2小时做出的预测（中位数）；"预测可信度"是实际延误落在预计值 ±<span id="tolTxt">15</span> 分钟以内的概率，已用历史数据校准。点开航班可以看到延误区间、主要影响因素和回测结果。<br>
-      <b>数据：</b>这是原型演示，回放的是2023年12月纽约 EWR / JFK / LGA 出发航班（来源 BTS 与机场实测天气），并不是实时数据。模型只用起飞前2小时已经能拿到的信息。<br>
-      <b>模型表现（2023年11–12月回测）：</b><span id="evalTxt"></span>
+      <b>How to read it:</b> "Predicted delay" is the median forecast made 2 hours before scheduled departure. "Confidence" is the probability that the actual delay lands within ±<span id="tolTxt">15</span> minutes of the prediction, calibrated on historical data. Tap a flight to see its delay range, main drivers and backtest result.<br>
+      <b>Data:</b> This prototype replays December 2023 departures from New York (EWR / JFK / LGA), sourced from BTS and airport weather observations. It is not live data. The model uses only information available 2 hours before departure.<br>
+      <b>Model performance (Nov–Dec 2023 backtest):</b> <span id="evalTxt"></span>
     </div>
   </main>
 </div>
@@ -154,7 +155,9 @@ const COLS = DATA.cols; const idx = Object.fromEntries(COLS.map((c, i) => [c, i]
 const F = DATA.rows.map((r) => Object.fromEntries(COLS.map((c) => [c, r[idx[c]]])));
 F.forEach((f) => { f.code = f.carrier + f.flight; });
 const AP = DATA.airports, AL = DATA.airlines, TOL = DATA.tol;
-const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+const WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtDate = (s) => { const [m, d] = s.split('-').map(Number); return `${MON[m - 1]} ${d}`; };
 const dates = [...new Set(F.map((f) => f.date))].sort();
 let state = { tab: 'flight', date: dates[0], page: 1 };
 const PAGE = 20;
@@ -182,7 +185,7 @@ function renderDates() {
 // ---------- route selectors ----------
 function initRoute() {
   const sel = $('#qFrom');
-  [['ALL', '纽约全部机场'], ['EWR', 'EWR 纽瓦克'], ['JFK', 'JFK 肯尼迪'], ['LGA', 'LGA 拉瓜迪亚']].forEach(([v, t]) => sel.append(new Option(t, v)));
+  [['ALL', 'All NYC airports'], ['EWR', 'EWR Newark'], ['JFK', 'JFK Kennedy'], ['LGA', 'LGA LaGuardia']].forEach(([v, t]) => sel.append(new Option(t, v)));
   const dl = $('#destList');
   [...new Set(F.map((f) => f.dest))].sort().forEach((c) => { const o = document.createElement('option'); o.value = c; o.label = AP[c] || c; o.textContent = `${c} · ${AP[c] || ''}`; dl.append(o); });
 }
@@ -205,8 +208,8 @@ function renderCards(day) {
   const avg = day.reduce((s, f) => s + f.pred, 0) / Math.max(day.length, 1);
   const risky = day.filter((f) => f.hi >= 60).length / Math.max(day.length, 1);
   const conf = day.reduce((s, f) => s + f.conf, 0) / Math.max(day.length, 1);
-  [['航班数', day.length.toLocaleString(), '计划出发'], ['平均预计延误', `${avg >= 0 ? '+' : '−'}${Math.abs(avg).toFixed(1)}分`, '中位数预测'],
-   ['高风险航班', `${(risky * 100).toFixed(1)}%`, '最坏情况超60分']].forEach(([k, v, d]) => {
+  [['Flights', day.length.toLocaleString(), 'Scheduled departures'], ['Avg. delay', `${avg >= 0 ? '+' : '−'}${Math.abs(avg).toFixed(1)} min`, 'Median forecast'],
+   ['High-risk flights', `${(risky * 100).toFixed(1)}%`, 'Worst case over 60 min']].forEach(([k, v, d]) => {
     const card = el('div', 'card'); card.append(el('div', 'k', k), el('div', 'v', v), el('div', 'd', d)); c.append(card);
   });
 }
@@ -217,9 +220,9 @@ function row(f) {
   const ico = el('div', 'ico', f.carrier); ico.style.background = hue(f.carrier);
   const main = el('div', 'main');
   const t1 = el('div', 't1'); t1.append(el('span', null, `${f.carrier} ${f.flight}`), el('span', 'tag', `${f.origin}→${f.dest}`));
-  main.append(t1, el('div', 't2', `${f.time} 起飞 · ${shortAp(f.dest)}`));
-  const mid = el('div', 'mid'); mid.append(el('div', 'a', `${f.conf}%`), el('div', 'b', `最坏 ${sign(f.hi)}分`));
-  const pill = el('div', 'pill ' + tone(f.pred), `${sign(f.pred)} 分钟`);
+  main.append(t1, el('div', 't2', `${f.time} · ${shortAp(f.dest)}`));
+  const mid = el('div', 'mid'); mid.append(el('div', 'a', `${f.conf}%`), el('div', 'b', `Worst ${sign(f.hi)} min`));
+  const pill = el('div', 'pill ' + tone(f.pred), `${sign(f.pred)} min`);
   r.append(ico, main, mid, pill);
   r.onclick = () => openSheet(f); r.onkeydown = (e) => { if (e.key === 'Enter') openSheet(f); };
   return r;
@@ -227,7 +230,7 @@ function row(f) {
 function renderList(items, title, sub) {
   $('#listTitle').textContent = title; $('#listSub').textContent = sub;
   const box = $('#list'); box.replaceChildren();
-  if (!items.length) { box.append(el('div', 'empty', '没有找到匹配的航班')); $('#more').hidden = true; return; }
+  if (!items.length) { box.append(el('div', 'empty', 'No matching flights found')); $('#more').hidden = true; return; }
   items.slice(0, state.page * PAGE).forEach((f) => box.append(row(f)));
   $('#more').hidden = items.length <= state.page * PAGE;
 }
@@ -236,29 +239,29 @@ function render() {
   renderDates();
   const day = F.filter((f) => f.date === state.date);
   renderCards(day);
-  const [m, d] = state.date.split('-').map(Number); const dlabel = `${m}月${d}日`;
+  const [m, d] = state.date.split('-').map(Number); const dlabel = `${MON[m - 1]} ${d}`;
   if (state.tab === 'flight') {
     const q = $('#qFlight').value.trim();
     if (!q) {
       const items = [...day].sort((a, b) => b.pred - a.pred || b.hi - a.hi);
-      return renderList(items, '延误风险最高', `${dlabel} · 按预计延误从高到低`);
+      return renderList(items, 'Highest delay risk', `${dlabel} · Sorted by predicted delay, longest first`);
     }
     const p = parseFlight(q);
     const items = p ? day.filter((f) => (!p.carrier || f.carrier === p.carrier) && String(f.flight).startsWith(p.num)) : [];
     items.sort((a, b) => a.time.localeCompare(b.time));
-    return renderList(items, `搜索 "${q.toUpperCase()}"`, `${dlabel} · 找到 ${items.length} 个航班`);
+    return renderList(items, `Search "${q.toUpperCase()}"`, `${dlabel} · ${items.length} flight${items.length === 1 ? '' : 's'} found`);
   }
   const from = $('#qFrom').value, to = $('#qTo').value;
   if (!to.trim()) {
-    renderList([], '按航线查询', '选择出发地并输入目的地机场代码或城市名');
-    $('#list').replaceChildren(el('div', 'empty', '输入目的地，例如 ATL、Orlando、LAX'));
+    renderList([], 'Search by route', 'Choose an origin and enter a destination airport code or city');
+    $('#list').replaceChildren(el('div', 'empty', 'Enter a destination, e.g. ATL, Orlando, LAX'));
     return;
   }
   const items = day.filter((f) => (from === 'ALL' || f.origin === from) && matchDest(to, f.dest))
     .sort((a, b) => a.pred - b.pred || b.conf - a.conf || a.time.localeCompare(b.time));
   const dests = [...new Set(items.map((f) => f.dest))];
   const label = dests.length === 1 ? `${dests[0]} ${shortAp(dests[0])}` : to;
-  renderList(items, `${from === 'ALL' ? '纽约' : from} → ${label}`, `${dlabel} · ${items.length} 个航班 · 按预计延误从短到长`);
+  renderList(items, `${from === 'ALL' ? 'NYC' : from} → ${label}`, `${dlabel} · ${items.length} flight${items.length === 1 ? '' : 's'} · Sorted by predicted delay, shortest first`);
 }
 
 // ---------- detail ----------
@@ -266,33 +269,33 @@ function openSheet(f) {
   const b = $('#sheetBody'); b.replaceChildren();
   const dh = el('div', 'dh'); const ico = el('div', 'ico', f.carrier); ico.style.background = hue(f.carrier);
   const tt = el('div'); const t1 = el('div', 't1'); t1.append(el('span', null, `${f.carrier} ${f.flight}`), el('span', 'tag', `${f.origin}→${f.dest}`));
-  tt.append(t1, el('div', 't2', `${AL[f.carrier] || f.carrier} · ${f.date.replace('-', '月')}日 ${f.time} · ${shortAp(f.dest)}`));
+  tt.append(t1, el('div', 't2', `${AL[f.carrier] || f.carrier} · ${fmtDate(f.date)}, ${f.time} · ${shortAp(f.dest)}`));
   dh.append(ico, tt); b.append(dh);
 
   const big = el('div', 'big'); const n = el('span', 'n', sign(f.pred)); n.style.color = `var(--${{ g: 'green', y: 'amber', r: 'red' }[tone(f.pred)]})`;
-  big.append(n, el('span', 'u', '分钟 · 预计延误'));
+  big.append(n, el('span', 'u', 'min · predicted delay'));
   b.append(big);
 
   // range bar
   const lo = Math.min(-15, f.lo, f.actual ?? 0), hi = Math.max(60, f.hi, Math.min(f.actual ?? 0, 300)) ;
   const pos = (v) => `${((Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * 100}%`;
-  const rg = el('div', 'range'); rg.append(el('div', 'sub', `80% 区间：${sign(f.lo)} ~ ${sign(f.hi)} 分钟`));
+  const rg = el('div', 'range'); rg.append(el('div', 'sub', `80% range: ${sign(f.lo)} to ${sign(f.hi)} min`));
   const bar = el('div', 'bar'); const s = el('div', 'seg2'); s.style.left = pos(f.lo); s.style.width = `calc(${pos(f.hi)} - ${pos(f.lo)})`;
   const dot = el('div', 'dot'); dot.style.left = pos(f.pred); dot.style.background = `var(--${{ g: 'green', y: 'amber', r: 'red' }[tone(f.pred)]})`;
-  const lab = el('div', 'lab', '预测'); lab.style.left = pos(f.pred);
+  const lab = el('div', 'lab', 'Predicted'); lab.style.left = pos(f.pred);
   bar.append(s, dot, lab);
-  if (f.actual != null) { const a = el('div', 'dot'); a.style.left = pos(f.actual); a.style.background = 'var(--fg)'; const al = el('div', 'lab', '实际'); al.style.left = pos(f.actual); al.style.top = '14px'; bar.append(a, al); }
-  const ticks = el('div', 'ticks'); ticks.style.marginTop = f.actual != null ? '22px' : '0'; ticks.append(el('span', null, `${sign(lo)}分`), el('span', null, `${sign(hi)}分`));
+  if (f.actual != null) { const a = el('div', 'dot'); a.style.left = pos(f.actual); a.style.background = 'var(--fg)'; const al = el('div', 'lab', 'Actual'); al.style.left = pos(f.actual); al.style.top = '14px'; bar.append(a, al); }
+  const ticks = el('div', 'ticks'); ticks.style.marginTop = f.actual != null ? '22px' : '0'; ticks.append(el('span', null, `${sign(lo)} min`), el('span', null, `${sign(hi)} min`));
   rg.append(bar, ticks); b.append(rg);
 
   const kv = el('div', 'kv');
-  [['预测可信度', `${f.conf}%`, `实际落在 ±${TOL} 分钟内的概率`], ['最坏情况', `${sign(f.hi)} 分钟`, '90% 分位预测']].forEach(([k, v, d]) => {
+  [['Confidence', `${f.conf}%`, `Chance actual is within ±${TOL} min`], ['Worst case', `${sign(f.hi)} min`, '90th-percentile forecast']].forEach(([k, v, d]) => {
     const c = el('div', 'card'); c.append(el('div', 'k', k), el('div', 'v', v), el('div', 'd', d)); kv.append(c);
   });
   b.append(kv);
 
-  b.append(el('div', 'sec', '主要影响因素'));
-  b.append(el('div', 'sub', '相对平均水平，每个因素把预测推高（红）或拉低（绿）了多少分钟'));
+  b.append(el('div', 'sec', 'Main drivers'));
+  b.append(el('div', 'sub', 'Minutes each factor pushed the forecast up (red) or down (green) relative to average'));
   const mx = Math.max(...f.drivers.map((d) => Math.abs(d[1])), 1);
   f.drivers.forEach(([name, v]) => {
     const r = el('div', 'drv'); const bb = el('span', 'bb'); const i = el('i');
@@ -304,13 +307,13 @@ function openSheet(f) {
   });
 
   const bt = el('div', 'bt');
-  if (f.actual == null) { bt.append(el('span', 'bad', '回测：该航班当天被取消')); }
+  if (f.actual == null) { bt.append(el('span', 'bad', 'Backtest: this flight was cancelled')); }
   else {
     const err = f.actual - f.pred, hit = Math.abs(err) <= TOL;
-    bt.append(document.createTextNode(`回测：实际延误 ${sign(f.actual)} 分钟，预测误差 ${sign(err)} 分钟 · `), el('span', hit ? 'ok' : 'bad', hit ? `在 ±${TOL} 分钟内` : `超出 ±${TOL} 分钟`));
+    bt.append(document.createTextNode(`Backtest: actual delay ${sign(f.actual)} min, prediction error ${sign(err)} min · `), el('span', hit ? 'ok' : 'bad', hit ? `within ±${TOL} min` : `outside ±${TOL} min`));
   }
   b.append(bt);
-  if (f.tail) b.append(el('div', 'sub', `机尾号 ${f.tail}`));
+  if (f.tail) b.append(el('div', 'sub', `Tail number ${f.tail}`));
   $('#mask').style.display = 'block'; requestAnimationFrame(() => $('#sheet').classList.add('open'));
 }
 function closeSheet() { $('#sheet').classList.remove('open'); setTimeout(() => { $('#mask').style.display = 'none'; }, 250); }
@@ -332,7 +335,7 @@ $('#more').onclick = () => { state.page += 1; render(); };
 
 const E = DATA.eval;
 $('#tolTxt').textContent = TOL;
-$('#evalTxt').textContent = `测试 ${E.test_flights.toLocaleString()} 个航班，平均绝对误差 ${E.mae_model.toFixed(1)} 分钟（只用航线和时刻的基线为 ${E.mae_schedule_only.toFixed(1)} 分钟）；${(E.hit15_model * 100).toFixed(0)}% 的航班误差在 ±${TOL} 分钟内；80% 区间实际覆盖 ${(E.interval80_coverage * 100).toFixed(0)}%。注意：中位数预测很少给出大延误，严重延误的风险请看"最坏"一栏。`;
+$('#evalTxt').textContent = `Tested on ${E.test_flights.toLocaleString()} flights. Mean absolute error ${E.mae_model.toFixed(1)} min (a route-and-time-only baseline gets ${E.mae_schedule_only.toFixed(1)} min); ${(E.hit15_model * 100).toFixed(0)}% of flights within ±${TOL} min; the 80% range covers ${(E.interval80_coverage * 100).toFixed(0)}% of actual delays. Note: the median forecast rarely predicts large delays, so check the "Worst" column for severe-delay risk.`;
 initRoute(); render();
 </script>
 </body>
