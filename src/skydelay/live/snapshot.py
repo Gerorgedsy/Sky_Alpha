@@ -84,12 +84,21 @@ def normalize_faa(xml: str) -> dict[str, Any]:
             code = (_text(event, "ARPT") or "").upper()
             if code not in events:
                 continue
+            # Arrival/departure delays keep their range one level down.
+            detail = event.find("Arrival_Departure")
+            low = _text(detail, "Min") if detail is not None else None
+            high = _text(event, "Max") or (
+                _text(detail, "Max") if detail is not None else None
+            )
             events[code].append(
                 {
                     "type": kind,
                     "reason": _text(event, "Reason"),
-                    "averageDelay": _text(event, "Avg"),
-                    "maximumDelay": _text(event, "Max"),
+                    "averageDelay": _text(event, "Avg")
+                    or (f"{low} to {high}" if low and high else None),
+                    "maximumDelay": high,
+                    "endTime": _text(event, "End_Time"),
+                    "direction": detail.get("Type") if detail is not None else None,
                 }
             )
     return {
