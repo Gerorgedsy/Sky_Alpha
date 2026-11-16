@@ -191,7 +191,33 @@ precision, F1, accuracy, weather coverage and improvement over Baseline 1.
 
 ## Live SkyDelay prototype
 
-The [public prototype](https://gerorgedsy.github.io/Sky_Alpha/prototype/) is a New York forecast workspace. Its live airport section combines FAA NAS advisories, NOAA aviation weather, and adsb.lol aircraft observations through a shared-cache backend. The schedules section links to official airport flight boards and supports an optional AirLabs key for partial in-page departures. The [historical forecast replay](prototype/replay.html) remains available for the November 2023 backtest. No current flight-level delay forecast or model confidence is displayed until a current schedule feed and validated model artifact are connected. See [`prototype/README.md`](prototype/README.md) and [`live-service/README.md`](live-service/README.md) for limits and deployment details.
+The [public prototype](https://gerorgedsy.github.io/Sky_Alpha/prototype/) is a New York forecast workspace. Its **Delay predictions** board calls each upcoming departure from JFK, LGA and EWR *delayed* (30+ minutes late) or *on time*, with the model's confidence in that call. The board reads `prototype/data/predictions.json`, which the team regenerates and pushes (see [Publishing predictions](#publishing-predictions)); until the first publish it says so rather than showing numbers. Add `?sample=1` to the URL to preview the layout with clearly labelled illustrative data. The live airport section combines FAA NAS advisories, NOAA aviation weather, and adsb.lol aircraft observations through a shared-cache backend, and the [historical forecast replay](prototype/replay.html) keeps the November 2023 backtest. See [`prototype/README.md`](prototype/README.md) and [`live-service/README.md`](live-service/README.md) for limits and deployment details.
+
+### Publishing predictions
+
+1. Train a baseline (above) so `artifacts/models/*.joblib` and its scorecard exist.
+2. Export the next hours of departures to a CSV or Parquet file with
+   `carrier`, `flight_number`, `origin`, `dest`, `sched_dep_utc`,
+   `sched_block_min` and `distance_mi` (non-NYC origins are ignored).
+3. Score and write the website file:
+
+```bash
+PYTHONPATH=src python -m skydelay.models.publish_predictions \
+  --schedule data/live/upcoming_departures.csv \
+  --model artifacts/models/baseline_2_schedule_weather.joblib \
+  --weather data/processed/weather.parquet \
+  --metrics artifacts/metrics/baseline_comparison.json --metrics-key baseline_2
+```
+
+4. Commit `prototype/data/predictions.json` and push; GitHub Pages updates in a
+   minute or two, and open pages pick it up within five minutes.
+
+A flight is *delayed* when the predicted probability of a 30+ minute delay
+reaches `--threshold` (default 0.5). Confidence is the probability of the call
+made, so it runs from 50 % to 100 %. The page marks predictions older than
+`--stale-after-minutes` (default 180) as out of date. Because the baselines are
+trained with balanced class weights, their raw probabilities overstate delay
+risk; calibrate before treating confidence as a literal hit rate.
 
 ## Pilot demo
 

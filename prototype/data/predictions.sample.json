@@ -1,0 +1,562 @@
+{
+ "schema_version": 1,
+ "status": "published",
+ "sample": true,
+ "note": "Illustrative data for checking the page layout. These are not SkyDelay model predictions.",
+ "generated_at": "2026-11-16T17:00:00Z",
+ "stale_after_minutes": 180,
+ "model": {
+  "name": "sample-data",
+  "target": "Departure 30 or more minutes late",
+  "threshold": 0.5,
+  "horizon_hours": 2,
+  "validation": {}
+ },
+ "airports": {
+  "JFK": "John F. Kennedy International",
+  "LGA": "LaGuardia",
+  "EWR": "Newark Liberty International"
+ },
+ "flights": [
+  {
+   "airport": "EWR",
+   "carrier": "AA",
+   "flight": "AA992",
+   "dest": "MCO",
+   "scheduled_dep_utc": "2026-11-16T16:20:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.5011,
+   "confidence": 0.5011
+  },
+  {
+   "airport": "JFK",
+   "carrier": "AS",
+   "flight": "AS1405",
+   "dest": "MCO",
+   "scheduled_dep_utc": "2026-11-16T16:25:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.1316,
+   "confidence": 0.8684
+  },
+  {
+   "airport": "EWR",
+   "carrier": "AS",
+   "flight": "AS535",
+   "dest": "MIA",
+   "scheduled_dep_utc": "2026-11-16T16:25:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.3422,
+   "confidence": 0.6578
+  },
+  {
+   "airport": "LGA",
+   "carrier": "WN",
+   "flight": "WN679",
+   "dest": "MSP",
+   "scheduled_dep_utc": "2026-11-16T16:25:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.4484,
+   "confidence": 0.5516
+  },
+  {
+   "airport": "LGA",
+   "carrier": "AA",
+   "flight": "AA359",
+   "dest": "MSP",
+   "scheduled_dep_utc": "2026-11-16T16:45:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.3291,
+   "confidence": 0.6709
+  },
+  {
+   "airport": "EWR",
+   "carrier": "B6",
+   "flight": "B61660",
+   "dest": "ATL",
+   "scheduled_dep_utc": "2026-11-16T16:45:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.0885,
+   "confidence": 0.9115
+  },
+  {
+   "airport": "JFK",
+   "carrier": "DL",
+   "flight": "DL1956",
+   "dest": "MIA",
+   "scheduled_dep_utc": "2026-11-16T16:50:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.1625,
+   "confidence": 0.8375
+  },
+  {
+   "airport": "LGA",
+   "carrier": "AA",
+   "flight": "AA2599",
+   "dest": "ORD",
+   "scheduled_dep_utc": "2026-11-16T17:00:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.2213,
+   "confidence": 0.7787
+  },
+  {
+   "airport": "JFK",
+   "carrier": "AS",
+   "flight": "AS2416",
+   "dest": "SFO",
+   "scheduled_dep_utc": "2026-11-16T17:00:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.2204,
+   "confidence": 0.7796
+  },
+  {
+   "airport": "EWR",
+   "carrier": "AA",
+   "flight": "AA1958",
+   "dest": "SFO",
+   "scheduled_dep_utc": "2026-11-16T17:05:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.2269,
+   "confidence": 0.7731
+  },
+  {
+   "airport": "EWR",
+   "carrier": "AA",
+   "flight": "AA1731",
+   "dest": "SEA",
+   "scheduled_dep_utc": "2026-11-16T17:30:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.7632,
+   "confidence": 0.7632
+  },
+  {
+   "airport": "EWR",
+   "carrier": "DL",
+   "flight": "DL399",
+   "dest": "ORD",
+   "scheduled_dep_utc": "2026-11-16T17:30:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.264,
+   "confidence": 0.736
+  },
+  {
+   "airport": "EWR",
+   "carrier": "AS",
+   "flight": "AS168",
+   "dest": "MIA",
+   "scheduled_dep_utc": "2026-11-16T17:35:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.1207,
+   "confidence": 0.8793
+  },
+  {
+   "airport": "JFK",
+   "carrier": "B6",
+   "flight": "B61522",
+   "dest": "SJU",
+   "scheduled_dep_utc": "2026-11-16T17:35:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.0745,
+   "confidence": 0.9255
+  },
+  {
+   "airport": "LGA",
+   "carrier": "B6",
+   "flight": "B62223",
+   "dest": "MIA",
+   "scheduled_dep_utc": "2026-11-16T17:35:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.4526,
+   "confidence": 0.5474
+  },
+  {
+   "airport": "LGA",
+   "carrier": "AA",
+   "flight": "AA2540",
+   "dest": "MSP",
+   "scheduled_dep_utc": "2026-11-16T17:40:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.398,
+   "confidence": 0.602
+  },
+  {
+   "airport": "EWR",
+   "carrier": "AA",
+   "flight": "AA943",
+   "dest": "LAX",
+   "scheduled_dep_utc": "2026-11-16T17:40:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.1257,
+   "confidence": 0.8743
+  },
+  {
+   "airport": "EWR",
+   "carrier": "B6",
+   "flight": "B6901",
+   "dest": "MCO",
+   "scheduled_dep_utc": "2026-11-16T17:40:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.1692,
+   "confidence": 0.8308
+  },
+  {
+   "airport": "LGA",
+   "carrier": "UA",
+   "flight": "UA1013",
+   "dest": "DEN",
+   "scheduled_dep_utc": "2026-11-16T17:45:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.4729,
+   "confidence": 0.5271
+  },
+  {
+   "airport": "JFK",
+   "carrier": "B6",
+   "flight": "B61363",
+   "dest": "FLL",
+   "scheduled_dep_utc": "2026-11-16T18:10:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.5048,
+   "confidence": 0.5048
+  },
+  {
+   "airport": "EWR",
+   "carrier": "B6",
+   "flight": "B61757",
+   "dest": "MCO",
+   "scheduled_dep_utc": "2026-11-16T18:10:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.2409,
+   "confidence": 0.7591
+  },
+  {
+   "airport": "EWR",
+   "carrier": "UA",
+   "flight": "UA1159",
+   "dest": "BOS",
+   "scheduled_dep_utc": "2026-11-16T18:35:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.3915,
+   "confidence": 0.6085
+  },
+  {
+   "airport": "JFK",
+   "carrier": "AS",
+   "flight": "AS2797",
+   "dest": "BOS",
+   "scheduled_dep_utc": "2026-11-16T18:40:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.4287,
+   "confidence": 0.5713
+  },
+  {
+   "airport": "JFK",
+   "carrier": "DL",
+   "flight": "DL2251",
+   "dest": "LAS",
+   "scheduled_dep_utc": "2026-11-16T18:50:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.6194,
+   "confidence": 0.6194
+  },
+  {
+   "airport": "EWR",
+   "carrier": "UA",
+   "flight": "UA2655",
+   "dest": "LAX",
+   "scheduled_dep_utc": "2026-11-16T19:00:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.7769,
+   "confidence": 0.7769
+  },
+  {
+   "airport": "LGA",
+   "carrier": "B6",
+   "flight": "B62179",
+   "dest": "BOS",
+   "scheduled_dep_utc": "2026-11-16T19:05:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.3085,
+   "confidence": 0.6915
+  },
+  {
+   "airport": "JFK",
+   "carrier": "DL",
+   "flight": "DL979",
+   "dest": "LAX",
+   "scheduled_dep_utc": "2026-11-16T19:05:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.2617,
+   "confidence": 0.7383
+  },
+  {
+   "airport": "LGA",
+   "carrier": "UA",
+   "flight": "UA1976",
+   "dest": "FLL",
+   "scheduled_dep_utc": "2026-11-16T19:05:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.72,
+   "confidence": 0.72
+  },
+  {
+   "airport": "EWR",
+   "carrier": "AS",
+   "flight": "AS1076",
+   "dest": "DEN",
+   "scheduled_dep_utc": "2026-11-16T19:10:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.3224,
+   "confidence": 0.6776
+  },
+  {
+   "airport": "JFK",
+   "carrier": "AS",
+   "flight": "AS1501",
+   "dest": "MCO",
+   "scheduled_dep_utc": "2026-11-16T19:15:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.3623,
+   "confidence": 0.6377
+  },
+  {
+   "airport": "LGA",
+   "carrier": "UA",
+   "flight": "UA2263",
+   "dest": "MIA",
+   "scheduled_dep_utc": "2026-11-16T19:15:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.4398,
+   "confidence": 0.5602
+  },
+  {
+   "airport": "LGA",
+   "carrier": "DL",
+   "flight": "DL1531",
+   "dest": "MIA",
+   "scheduled_dep_utc": "2026-11-16T19:20:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.412,
+   "confidence": 0.588
+  },
+  {
+   "airport": "JFK",
+   "carrier": "AS",
+   "flight": "AS518",
+   "dest": "ORD",
+   "scheduled_dep_utc": "2026-11-16T19:25:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.1539,
+   "confidence": 0.8461
+  },
+  {
+   "airport": "JFK",
+   "carrier": "AS",
+   "flight": "AS1863",
+   "dest": "FLL",
+   "scheduled_dep_utc": "2026-11-16T19:40:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.1242,
+   "confidence": 0.8758
+  },
+  {
+   "airport": "LGA",
+   "carrier": "UA",
+   "flight": "UA447",
+   "dest": "MCO",
+   "scheduled_dep_utc": "2026-11-16T20:00:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.262,
+   "confidence": 0.738
+  },
+  {
+   "airport": "EWR",
+   "carrier": "AS",
+   "flight": "AS251",
+   "dest": "SFO",
+   "scheduled_dep_utc": "2026-11-16T20:05:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.4191,
+   "confidence": 0.5809
+  },
+  {
+   "airport": "JFK",
+   "carrier": "AS",
+   "flight": "AS100",
+   "dest": "SJU",
+   "scheduled_dep_utc": "2026-11-16T20:25:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.2553,
+   "confidence": 0.7447
+  },
+  {
+   "airport": "LGA",
+   "carrier": "UA",
+   "flight": "UA2058",
+   "dest": "DCA",
+   "scheduled_dep_utc": "2026-11-16T20:25:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.4816,
+   "confidence": 0.5184
+  },
+  {
+   "airport": "JFK",
+   "carrier": "AS",
+   "flight": "AS1385",
+   "dest": "MIA",
+   "scheduled_dep_utc": "2026-11-16T20:30:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.1178,
+   "confidence": 0.8822
+  },
+  {
+   "airport": "EWR",
+   "carrier": "UA",
+   "flight": "UA444",
+   "dest": "LAX",
+   "scheduled_dep_utc": "2026-11-16T20:40:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.2792,
+   "confidence": 0.7208
+  },
+  {
+   "airport": "LGA",
+   "carrier": "AA",
+   "flight": "AA1085",
+   "dest": "DEN",
+   "scheduled_dep_utc": "2026-11-16T20:45:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.532,
+   "confidence": 0.532
+  },
+  {
+   "airport": "LGA",
+   "carrier": "B6",
+   "flight": "B62244",
+   "dest": "RDU",
+   "scheduled_dep_utc": "2026-11-16T21:15:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.4744,
+   "confidence": 0.5256
+  },
+  {
+   "airport": "LGA",
+   "carrier": "DL",
+   "flight": "DL534",
+   "dest": "RDU",
+   "scheduled_dep_utc": "2026-11-16T21:35:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.5417,
+   "confidence": 0.5417
+  },
+  {
+   "airport": "EWR",
+   "carrier": "DL",
+   "flight": "DL1360",
+   "dest": "PHX",
+   "scheduled_dep_utc": "2026-11-16T21:50:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.3955,
+   "confidence": 0.6045
+  },
+  {
+   "airport": "LGA",
+   "carrier": "UA",
+   "flight": "UA2761",
+   "dest": "ATL",
+   "scheduled_dep_utc": "2026-11-16T21:55:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.5722,
+   "confidence": 0.5722
+  },
+  {
+   "airport": "EWR",
+   "carrier": "AA",
+   "flight": "AA1201",
+   "dest": "SEA",
+   "scheduled_dep_utc": "2026-11-16T22:00:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.8149,
+   "confidence": 0.8149
+  },
+  {
+   "airport": "EWR",
+   "carrier": "AA",
+   "flight": "AA2804",
+   "dest": "MCO",
+   "scheduled_dep_utc": "2026-11-16T22:00:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.8392,
+   "confidence": 0.8392
+  },
+  {
+   "airport": "JFK",
+   "carrier": "DL",
+   "flight": "DL357",
+   "dest": "SJU",
+   "scheduled_dep_utc": "2026-11-16T22:05:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.2817,
+   "confidence": 0.7183
+  },
+  {
+   "airport": "JFK",
+   "carrier": "B6",
+   "flight": "B61714",
+   "dest": "SFO",
+   "scheduled_dep_utc": "2026-11-16T22:10:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.3869,
+   "confidence": 0.6131
+  },
+  {
+   "airport": "JFK",
+   "carrier": "AA",
+   "flight": "AA1205",
+   "dest": "LAS",
+   "scheduled_dep_utc": "2026-11-16T22:15:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.4946,
+   "confidence": 0.5054
+  },
+  {
+   "airport": "JFK",
+   "carrier": "B6",
+   "flight": "B61925",
+   "dest": "ATL",
+   "scheduled_dep_utc": "2026-11-16T22:15:00Z",
+   "prediction": "on_time",
+   "delay_probability": 0.1959,
+   "confidence": 0.8041
+  },
+  {
+   "airport": "LGA",
+   "carrier": "B6",
+   "flight": "B6929",
+   "dest": "MSP",
+   "scheduled_dep_utc": "2026-11-16T22:15:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.93,
+   "confidence": 0.93
+  },
+  {
+   "airport": "JFK",
+   "carrier": "AS",
+   "flight": "AS1114",
+   "dest": "SEA",
+   "scheduled_dep_utc": "2026-11-16T22:25:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.6022,
+   "confidence": 0.6022
+  },
+  {
+   "airport": "LGA",
+   "carrier": "AA",
+   "flight": "AA2220",
+   "dest": "MSP",
+   "scheduled_dep_utc": "2026-11-16T22:45:00Z",
+   "prediction": "delayed",
+   "delay_probability": 0.674,
+   "confidence": 0.674
+  }
+ ]
+}

@@ -1,0 +1,20 @@
+{
+ "schema_version": 1,
+ "status": "awaiting_model",
+ "sample": false,
+ "generated_at": null,
+ "stale_after_minutes": 180,
+ "model": {
+  "name": null,
+  "target": "Departure 30 or more minutes late",
+  "threshold": 0.5,
+  "horizon_hours": 2,
+  "validation": {}
+ },
+ "airports": {
+  "JFK": "John F. Kennedy International",
+  "LGA": "LaGuardia",
+  "EWR": "Newark Liberty International"
+ },
+ "flights": []
+}
