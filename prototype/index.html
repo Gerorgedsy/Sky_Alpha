@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0b1d32">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="live.css">
-<link rel="stylesheet" href="predictions.css">
+<link rel="stylesheet" href="styles.css?v=20261116c">
+<link rel="stylesheet" href="live.css?v=20261116c">
+<link rel="stylesheet" href="predictions.css?v=20261116c">
 <title>NYC flight delay predictions | SkyDelay</title>
 </head>
 <body>
@@ -34,8 +34,8 @@
 <section class="map-panel panel" aria-labelledby="mapTitle"><div class="map-title"><div><p class="section-kicker">Position plot</p><h2 id="mapTitle">New York airspace</h2><p class="sub">Approximate geographic plot · select a dot for details</p></div><div class="map-legend"><span><i class="airborne-dot"></i>Airborne</span><span><i class="ground-dot"></i>On ground</span></div></div><div class="map-frame"><svg id="aircraftMap" viewBox="0 0 860 520" role="group" aria-label="Aircraft positions near New York" preserveAspectRatio="xMidYMid meet"><defs><pattern id="grid" width="86" height="52" patternUnits="userSpaceOnUse"><path d="M 86 0 L 0 0 0 52" fill="none" stroke="#2c5472" stroke-width="1"/></pattern></defs><rect width="860" height="520" fill="#102940"/><rect width="860" height="520" fill="url(#grid)"/><circle cx="430" cy="260" r="122" fill="none" stroke="#38617c" stroke-dasharray="5 7"/><circle cx="430" cy="260" r="243" fill="none" stroke="#38617c" stroke-dasharray="5 7"/><g id="airportMarkers"></g><g id="aircraftMarkers"></g></svg><div class="map-corner">Approx. 75 NM from NYC<br>Positions only · not for navigation</div></div></section>
 <section class="panel aircraft-panel" aria-labelledby="listTitle"><div class="aircraft-head"><div><p class="section-kicker">Observed aircraft</p><h2 id="listTitle">Aircraft in the region</h2><p id="listDetail" class="sub">Waiting for live observations…</p></div><div class="aircraft-filters"><label for="liveSearch">Find a callsign, registration, or hex ID</label><input id="liveSearch" type="search" placeholder="e.g. DAL123 or A1B2C3" autocomplete="off"><select id="groundFilter" aria-label="Filter aircraft"><option value="all">All aircraft</option><option value="airborne">Airborne</option><option value="ground">On ground</option></select></div></div><div class="live-colhead" aria-hidden="true"><span>Aircraft</span><span>Altitude</span><span>Speed</span><span>Last position</span></div><div id="aircraftList" aria-live="polite"><div class="loading" role="status">Loading current aircraft…</div></div><button class="more" id="showMore" type="button" hidden>Show more aircraft</button></section></div>
 <aside class="sidebar live-sidebar" aria-label="Live aircraft details and source"><section id="selectedCard" class="side-card selected-card" aria-labelledby="selectedTitle"><h3 id="selectedTitle">Select an aircraft</h3><p>Choose a dot or aircraft row to see its latest reported position and motion.</p></section><section class="side-card" id="about"><h3>About the live data</h3><p><strong>Source:</strong> <a href="https://www.adsb.lol/docs/open-data/api" target="_blank" rel="noopener noreferrer">adsb.lol</a> community ADS-B network. Public data is licensed under <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener noreferrer">ODbL 1.0</a>.</p><p><strong>Refresh:</strong> This page checks for updates every 30 seconds. The shared backend caches the source for about 3½ minutes under the anonymous API allowance. The observation age is shown above the map.</p><p><strong>Limits:</strong> Positions may be absent, incomplete, or delayed. A visible aircraft is not necessarily departing a New York airport. No live delay prediction is made from aircraft positions alone.</p><a class="text-link" href="replay.html">Explore the 2023 forecast replay →</a></section></aside></div></main></div>
-<script src="live.js" defer></script>
-<script src="operations.js" defer></script>
-<script src="predictions.js" defer></script>
+<script src="live.js?v=20261116c" defer></script>
+<script src="operations.js?v=20261116c" defer></script>
+<script src="predictions.js?v=20261116c" defer></script>
 </body>
 </html>

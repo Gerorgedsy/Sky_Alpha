@@ -102,6 +102,8 @@
       button.querySelector('small').textContent = state.data?.models[direction] ? `${count} flights` : 'Not published';
     });
     $('#predPastLabel').textContent = WORDS[state.direction].toggle;
+    const title = $('#pageTitle');
+    if (title) title.textContent = state.direction === 'arrival' ? 'Will your flight arrive on time?' : 'Will your flight leave on time?';
   }
 
   function renderTabs() {
