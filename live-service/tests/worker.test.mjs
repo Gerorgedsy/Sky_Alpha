@@ -41,10 +41,17 @@ try {
   assert.equal(upstreamCalls, 1, 'shared cache avoids repeated source requests');
   const denied = await worker.fetch(new Request(url, {headers:{Origin:'https://unknown.example'}}), {DB});
   assert.equal(denied.status, 403);
-  database.prepare('UPDATE feed_cache SET fetched_at_ms = 0').run();
+  database.prepare('UPDATE feed_cache SET fetched_at_ms = ?').run(Date.now() - 300000);
   globalThis.fetch = async () => { throw new Error('feed down'); };
+  const stale = await (await worker.fetch(request(), {DB})).json();
+  assert.equal(stale.status, 'stale');
+  assert.equal(stale.aircraft.length, 1);
+  database.prepare('UPDATE feed_cache SET fetched_at_ms = 0, lease_until_ms = 0').run();
   const unavailable = await worker.fetch(request(), {DB});
   assert.equal(unavailable.status, 503);
+  const backoff = await worker.fetch(request(), {DB});
+  assert.equal(backoff.status, 503);
+  assert.equal(database.prepare('SELECT lease_until_ms FROM feed_cache').get().lease_until_ms > Date.now(), true);
   console.log('Worker cache, normalization, CORS, and unavailable state passed');
 } finally {
   globalThis.fetch = originalFetch;

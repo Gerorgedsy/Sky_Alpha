@@ -109,7 +109,10 @@ export default {
       await new Promise((resolve) => setTimeout(resolve, 700));
       row = await read();
       try { previous = JSON.parse(row.payload); } catch { previous = null; }
-      if (Array.isArray(previous?.aircraft)) return reply(previous, 200, origin);
+      const refreshedAge = (Date.now() - row.fetched_at_ms) / 1000;
+      if (Array.isArray(previous?.aircraft) && refreshedAge < MAX_STALE_SECONDS) {
+        return reply(refreshedAge < refreshSeconds ? previous : {...previous, status:'stale'}, 200, origin);
+      }
       return reply({status:'unavailable', error:'Live aircraft feed is starting', observedAt:null, aircraft:[]}, 503, origin);
     }
 
@@ -120,7 +123,7 @@ export default {
       return reply(data, 200, origin);
     } catch (error) {
       console.error('Live feed refresh failed:', error?.message || String(error));
-      await env.DB.prepare('UPDATE feed_cache SET lease_until_ms = 0 WHERE cache_key = ?').bind(key).run();
+      await env.DB.prepare('UPDATE feed_cache SET lease_until_ms = ? WHERE cache_key = ?').bind(Date.now() + 60000, key).run();
       if (previous && age < MAX_STALE_SECONDS) {
         return reply({...previous, status:'stale', error:'Live feed temporarily unavailable'}, 200, origin);
       }
