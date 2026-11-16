@@ -415,6 +415,11 @@ def stand_in(
 ) -> tuple[pd.DataFrame, date | None]:
     """Copy the latest same-weekday flights onto ``target`` at the same local time."""
     frame = direction_frame(reference, direction)
+    # The first and last days of the record are cut off by the UTC window
+    # (a late-evening flight in New York is already the next day in UTC), so
+    # only whole days are copied.
+    edges = {frame["local_date"].min(), frame["local_date"].max()}
+    frame = frame.loc[~frame["local_date"].isin(edges)]
     weekday = frame["local_date"].dt.dayofweek == target.weekday()
     if not weekday.any():
         return frame.iloc[0:0], None

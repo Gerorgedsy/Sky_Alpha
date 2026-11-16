@@ -92,6 +92,14 @@ def test_stand_in_copies_the_latest_same_weekday_at_local_time(flights):
     assert (rows["local"].dt.date == target).all()
 
 
+def test_stand_in_skips_days_cut_off_by_the_record_edges(flights):
+    reference = nyc_delay.schedule_reference(flights)
+    last = nyc_delay.direction_frame(reference, "departure")["local_date"].max()
+    target = (last + pd.Timedelta(days=7)).date()
+    _, source = nyc_delay.stand_in(reference, "departure", target)
+    assert pd.Timestamp(source) == last - pd.Timedelta(days=7)
+
+
 def test_payload_has_calls_minutes_and_confidence(flights, models):
     reference = nyc_delay.schedule_reference(flights)
     targets = [date(2026, 11, 16), date(2026, 11, 17)]
