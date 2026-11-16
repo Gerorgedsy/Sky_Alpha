@@ -1,5 +1,7 @@
 # SkyDelay live airspace API
 
+The website does not depend on this backend alone: when it is unreachable, the airport-conditions and flight-board sections fall back to the snapshots that the **Live airport data** GitHub workflow publishes on the `live-data` branch (see `src/skydelay/live/snapshot.py`). The live airspace plot still needs this backend.
+
 A Cloudflare Worker backend for the SkyDelay GitHub Pages prototype. `GET /api/aircraft` returns observed aircraft positions around New York, sourced from [adsb.lol](https://www.adsb.lol/docs/open-data/api) under ODbL 1.0. `GET /api/operations` returns current FAA NAS airport advisories and NOAA Aviation Weather Center observations for JFK, EWR, and LGA. `GET /api/schedules?airport=JFK` (or EWR/LGA) returns `not_configured` until an AirLabs key is supplied, then a partial live schedule board. It does not return SkyDelay model forecasts or confidence, and none of the sources guarantees complete coverage.
 
 The worker stores one shared upstream snapshot in D1 for 210 seconds by default, serves the last snapshot for up to 15 minutes when the feed fails, and reports `status: "stale"` or `503` so the UI can label it honestly. The browser checks the backend every 30 seconds. Anonymous API use is limited to 500 requests per day per IP by the source; upstream limits may affect availability under traffic. `ADSB_LOL_API_KEY` and `REFRESH_SECONDS` are optional runtime settings for a higher-quota account. Do not commit a key.

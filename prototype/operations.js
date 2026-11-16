@@ -57,6 +57,7 @@
 
   // ---- Airport conditions -------------------------------------------------
   function renderConditions(data, fromSnapshot) {
+    window.dispatchEvent(new CustomEvent('skydelay:operations', {detail: data}));
     const container = $('#airportConditions');
     container.replaceChildren();
     const old = minutesOld(data.fetchedAt) > OPERATIONS_STALE_MIN;
@@ -88,6 +89,7 @@
   }
 
   function renderConditionsFallback() {
+    window.dispatchEvent(new CustomEvent('skydelay:operations', {detail: null}));
     $('#operationsStatus').textContent = 'Airport conditions are not currently available here.';
     const fallback = node('div', 'card airport-fallback');
     fallback.append(node('strong', null, 'Check the official sources for current conditions.'), node('p', null, 'SkyDelay is not showing a current FAA or weather reading here.'));

@@ -1,0 +1,177 @@
+/* SkyDelay night theme: dark glass over an illustrated night airfield.
+ * Loaded after styles.css, live.css and predictions.css and overrides them.
+ */
+:root{
+  --bg:#060d17;--ink:#eef3f8;--muted:#a3b3c6;--soft:#7f90a5;--line:rgba(255,255,255,.09);
+  --glass:rgba(255,255,255,.045);--glass-2:rgba(255,255,255,.075);--glass-line:rgba(255,255,255,.12);
+  --white:var(--glass);--teal:#7ee0d0;--teal-light:rgba(126,224,208,.12);
+  --amber:#f4c38a;--amber-light:rgba(244,195,138,.12);--red:#ff9585;--red-light:rgba(255,149,133,.12);
+  --green:#72e3ad;--green-light:rgba(114,227,173,.12);--peach:#f6cfa2;
+  --shadow:0 24px 60px rgba(0,0,0,.35);
+  --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  color-scheme:dark;
+}
+html{background:var(--bg)}
+body{background:radial-gradient(1200px 700px at 85% 115%,rgba(126,224,208,.06),transparent 60%),var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+.visually-hidden{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{background:#fff;color:#060d17;border-radius:10px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline-color:var(--peach)}
+
+/* ---- Floating navigation ---- */
+.nav-float{position:fixed;top:16px;left:0;right:0;z-index:40;display:flex;justify-content:center;padding:0 16px;pointer-events:none}
+.nav-pill{pointer-events:auto;display:flex;align-items:center;gap:6px;padding:7px 7px 7px 16px;border-radius:18px;background:rgba(10,17,29,.58);border:1px solid var(--glass-line);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.nav-brand{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;font-weight:650;font-size:17px;letter-spacing:-.2px;margin-right:18px;white-space:nowrap}
+.nav-brand em{font-style:normal;color:var(--muted);font-weight:500}
+.nav-logo{width:26px;height:26px;color:var(--peach)}
+.nav-links{display:flex;gap:2px}
+.nav-links a{color:#c9d5e2;text-decoration:none;font-size:14px;font-weight:500;padding:9px 13px;border-radius:11px}
+.nav-links a:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-cta{background:#fff;color:#0a111d;text-decoration:none;font-weight:650;font-size:14px;padding:10px 16px;border-radius:12px;margin-left:8px;white-space:nowrap}
+.nav-cta:hover{background:var(--peach)}
+
+/* ---- Hero ---- */
+.hero-x:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(3,7,15,.78) 0%,rgba(3,7,15,.55) 38%,rgba(3,7,15,0) 62%)}
+.hero-x{position:relative;min-height:min(100vh,940px);display:flex;flex-direction:column;justify-content:center;overflow:hidden;isolation:isolate}
+.hero-scene{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2}
+.hero-inner{width:100%;max-width:1360px;margin:0 auto;padding:130px 32px 90px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.85fr);gap:56px;align-items:end}
+.hero-badge{display:inline-flex;max-width:100%;align-items:center;gap:9px;margin:0 0 26px;padding:7px 14px;border-radius:999px;background:rgba(10,17,29,.5);border:1px solid var(--glass-line);color:#e6edf5;font-size:14px;font-weight:500;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.hero-badge i{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 4px rgba(244,195,138,.18);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(244,195,138,.04)}}
+.hero-copy h1{font-size:clamp(46px,6.4vw,96px);line-height:.98;letter-spacing:-.045em;font-weight:750;margin:0 0 26px;color:#fff;text-wrap:balance}
+.hero-grad{background:linear-gradient(100deg,#fff 0%,#fde3c4 35%,#f4c38a 70%,#e9a46b 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-lede{font-size:clamp(16px,1.35vw,20px);line-height:1.55;color:#d7e1ec;max-width:640px;margin:0 0 30px}
+.hero-search{display:flex;align-items:center;gap:12px;max-width:680px;padding:8px 8px 8px 20px;border-radius:20px;background:rgba(10,17,29,.6);border:1px solid var(--glass-line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.hero-search svg{width:20px;height:20px;color:var(--muted);flex:none}
+.hero-search input{flex:1;min-width:0;border:0;background:transparent;color:#fff;font-size:17px;padding:12px 0}
+.hero-search input::placeholder{color:#8a9bb0}
+.hero-search input:focus{outline:none}
+.hero-search:focus-within{border-color:rgba(246,207,162,.55)}
+.hero-search button{border:0;background:#fff;color:#0a111d;font-weight:650;font-size:16px;padding:14px 22px;border-radius:14px;white-space:nowrap}
+.hero-search button:hover{background:var(--peach)}
+.hero-try{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:18px;color:var(--muted);font-size:14px}
+.hero-try button{border:1px solid var(--glass-line);background:rgba(10,17,29,.45);color:#e6edf5;border-radius:999px;padding:8px 15px;font-size:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.hero-try button:hover{background:rgba(255,255,255,.12)}
+.hero-card{border-radius:26px;padding:22px;background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.035));border:1px solid var(--glass-line);backdrop-filter:blur(22px) saturate(1.25);-webkit-backdrop-filter:blur(22px) saturate(1.25);box-shadow:var(--shadow)}
+.hero-card-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.hero-card-head p{margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:650}
+.hero-card-head h2{margin:2px 0 0;font-size:21px;letter-spacing:-.3px;color:#fff}
+.hero-dial{width:52px;height:52px;border-radius:15px;flex:none;border:1px solid rgba(246,207,162,.35);background:radial-gradient(circle at 50% 50%,rgba(246,207,162,.16),transparent 70%);position:relative;overflow:hidden}
+.hero-dial:before,.hero-dial:after{content:"";position:absolute;inset:9px;border-radius:50%;border:1.5px solid rgba(246,207,162,.55)}
+.hero-dial:after{inset:18px;border-color:rgba(246,207,162,.8)}
+.hero-dial i{position:absolute;left:50%;top:50%;width:22px;height:22px;transform-origin:0 0;background:conic-gradient(from 0deg,rgba(246,207,162,.6),transparent 70deg);border-radius:0 0 22px 0;animation:dial 4s linear infinite}
+@keyframes dial{to{transform:rotate(360deg)}}
+.hero-chip{margin-left:auto;align-self:flex-start;font-size:12px;font-weight:650;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--muted);white-space:nowrap}
+.hero-chip.is-ok{background:rgba(114,227,173,.14);color:var(--green)}
+.hero-chip.is-alert{background:rgba(255,149,133,.15);color:var(--red)}
+.hero-rows{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.hero-rows li{display:flex;align-items:center;gap:14px;padding:13px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#e6edf5;font-size:15px}
+.hero-rows li strong{display:block;font-weight:550;color:#fff;font-size:15px}
+.hero-rows li small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.hero-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;flex:none;font-size:12px;font-weight:750;letter-spacing:.04em;background:rgba(255,255,255,.08);color:#e6edf5}
+.hero-rows li.is-ok .hero-ico{background:rgba(114,227,173,.15);color:var(--green)}
+.hero-rows li.is-alert .hero-ico{background:rgba(255,149,133,.16);color:var(--red)}
+.hero-card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;color:var(--muted);font-size:13px}
+.hero-card-foot a{color:#fff;text-decoration:none;font-weight:600;font-size:14px;border:1px solid var(--glass-line);padding:9px 15px;border-radius:12px;background:rgba(255,255,255,.04)}
+.hero-card-foot a:hover{background:rgba(255,255,255,.12)}
+.hero-caption{position:absolute;left:32px;bottom:18px;margin:0;font-size:12px;color:rgba(214,225,236,.55)}
+
+/* ---- Shared surfaces ---- */
+.shell{padding-top:12px}
+.panel,.card,.side-card,.method{background:var(--glass);border:1px solid var(--line);border-radius:22px;box-shadow:none;color:var(--ink);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.panel{border-radius:26px}
+.section-kicker,.eyebrow{color:var(--peach);letter-spacing:.16em}
+h1,h2,h3{color:#fff}
+.sub,.section-head p,.conditions-note{color:var(--muted)}
+.notice{background:rgba(126,224,208,.06);border-color:rgba(126,224,208,.18);color:#cfe1ea;border-radius:16px}
+.notice strong{color:#fff}.notice-icon{color:var(--teal)}
+.text-link,.forecast-link,.schedule-footer a{color:var(--peach)}
+input,select{color-scheme:dark}
+.loading,.feed-error,.feed-error strong{color:var(--muted)}
+
+/* ---- Predictions board ---- */
+.forecast-panel{position:relative}
+.pred-pill-live{background:rgba(114,227,173,.12);border-color:rgba(114,227,173,.3);color:var(--green)}
+.pred-pill-stale,.pred-banner{background:var(--amber-light);border-color:rgba(244,195,138,.3);color:var(--amber)}
+.pred-pill-wait{background:rgba(255,255,255,.06);border-color:var(--line);color:var(--muted)}
+.pred-meta{color:#fff}
+.pred-direction,.pred-filter{background:transparent;border-color:var(--glass-line);border-radius:14px}
+.pred-direction button,.pred-filter button{background:transparent;color:var(--muted);border-color:var(--glass-line)}
+.pred-direction button[aria-pressed=true],.pred-filter button[aria-pressed=true]{background:#fff;color:#0a111d}
+.pred-direction button[aria-pressed=true] small{color:#55657a}
+.pred-airport{background:var(--glass);border-color:var(--line);color:var(--ink);border-radius:16px}
+.pred-airport:hover{border-color:rgba(255,255,255,.22)}
+.pred-airport[aria-pressed=true]{background:linear-gradient(150deg,rgba(246,207,162,.16),rgba(255,255,255,.05));border-color:rgba(246,207,162,.5);color:#fff}
+.pred-airport[aria-pressed=true] span,.pred-airport[aria-pressed=true] small{color:#d7e1ec}
+.pred-airport small.has-delays,.pred-airport[aria-pressed=true] small.has-delays{color:var(--red)}
+.pred-tile{background:var(--glass);border-color:var(--line);border-radius:16px}
+.pred-tile strong{color:#fff}
+.pred-tile-delayed{background:var(--red-light);border-color:rgba(255,149,133,.25)}.pred-tile-delayed strong{color:var(--red)}
+.pred-tile-ontime{background:var(--green-light);border-color:rgba(114,227,173,.25)}.pred-tile-ontime strong{color:var(--green)}
+.pred-controls input[type=search],.pred-controls select,.aircraft-filters input,.aircraft-filters select{background:rgba(255,255,255,.05);border-color:var(--glass-line);color:var(--ink);border-radius:12px}
+.pred-colhead,.live-colhead{background:rgba(255,255,255,.03);color:var(--soft)}
+.pred-list .pred-row:hover{background:rgba(255,255,255,.04)}
+.pred-flight,.pred-time strong{color:#fff}
+.pred-status.is-delayed{background:var(--red-light);border-color:rgba(255,149,133,.3);color:var(--red)}
+.pred-status.is-ontime{background:var(--green-light);border-color:rgba(114,227,173,.3);color:var(--green)}
+.pred-bar{background:rgba(255,255,255,.08)}
+.pred-bar i.is-delayed{background:linear-gradient(90deg,#ff7a6a,#ffb199)}
+.pred-bar i.is-ontime{background:linear-gradient(90deg,#4fd1a0,#9ff0cf)}
+.pred-conf-label strong{color:#fff}
+.pred-empty strong{color:#fff}
+.pred-validation{color:#e6edf5!important}
+.forecast-footer{border-color:var(--line)}
+
+/* ---- Flight boards ---- */
+.schedule-tabs button{background:transparent;border-color:var(--glass-line);color:var(--muted);border-radius:12px}
+.schedule-tabs button[aria-pressed=true]{background:#fff;border-color:#fff;color:#0a111d}
+.schedule-content{border-color:var(--line)}
+.schedule-row{border-color:var(--line)}
+.schedule-row strong{color:#fff}
+.schedule-colhead{color:var(--soft)}
+.schedule-footer{background:rgba(255,255,255,.03);border-color:var(--line);color:var(--muted)}
+.schedule-status.is-late,.schedule-status.is-late small{color:var(--amber)}
+
+/* ---- Airport conditions ---- */
+.airport-card h3{color:#fff}
+.airport-weather{color:#dfe8f1;border-color:var(--line)}
+.airport-normal{color:var(--green)}.airport-alert{color:var(--red)}.airport-unknown{color:var(--amber)}
+.airport-updated{color:var(--soft)}
+
+/* ---- Live airspace ---- */
+.refresh-button{background:rgba(255,255,255,.06);border-color:var(--glass-line);color:#fff;border-radius:12px}
+.live-stats .card .v{color:#fff}
+.map-panel{overflow:hidden}
+.map-frame{background:#0a1626}
+#aircraftMap>rect:first-of-type{fill:#0a1626}#aircraftMap>rect:nth-of-type(2){opacity:.5}
+.live-row{background:transparent;color:var(--ink);border-color:var(--line)}
+.live-row:hover,.live-row.selected{background:rgba(255,255,255,.05)}
+.live-icon{background:rgba(126,224,208,.12);color:var(--teal)}
+.live-id strong{color:#fff}
+.more{background:transparent;border-color:var(--glass-line);color:var(--peach);border-radius:12px}
+.stat{border-color:var(--line)}
+
+/* ---- Historical replay page (shares this theme) ---- */
+.site-header{background:rgba(6,13,23,.85);border-bottom:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);position:sticky;top:0;z-index:30}
+.top-nav a[aria-current="page"],.top-nav a:hover{background:rgba(255,255,255,.08)}
+.hero{background:linear-gradient(120deg,rgba(246,207,162,.12),rgba(126,224,208,.08) 60%,rgba(255,255,255,.03));border:1px solid var(--glass-line);border-radius:26px;box-shadow:none}
+.hero-facts span{border-color:var(--glass-line);background:rgba(255,255,255,.05)}
+.filters,.range,.bt{background:rgba(255,255,255,.03);border-color:var(--line)}
+.field,.clear,.date,.sort-label select,.close-sheet{background:rgba(255,255,255,.05);border-color:var(--glass-line);color:var(--ink)}
+.field input{color:var(--ink);background:transparent}
+.date[aria-pressed="true"]{background:#fff;border-color:#fff;color:#0a111d}.date[aria-pressed="true"] span{color:#55657a}
+.date:hover:not([aria-pressed="true"]){background:rgba(255,255,255,.09)}
+.colhead{background:rgba(255,255,255,.03);border-color:var(--line);color:var(--soft)}
+.row{background:transparent;border-color:var(--line);color:var(--ink)}
+.row:hover{background:rgba(255,255,255,.04)}
+.ico{background:rgba(126,224,208,.12);color:var(--teal)}
+.route-tag{background:rgba(126,224,208,.12);color:var(--teal)}
+.sheet{background:#0c1522;border:1px solid var(--glass-line);color:var(--ink)}
+.bar,.drv .bb{background:rgba(255,255,255,.1)}
+.bar .dot{border-color:#0c1522}
+.tabs button{color:var(--muted)}.tabs button[aria-selected="true"]{color:#fff;border-color:var(--peach)}
+
+/* ---- Responsive ---- */
+@media(max-width:1100px){.nav-links a{padding:9px 9px;font-size:13px}.hero-inner{grid-template-columns:minmax(0,1fr);gap:34px;align-items:start}.hero-card{max-width:620px}}
+@media(max-width:860px){.nav-links{display:none}.nav-brand{margin-right:auto}.nav-pill{width:100%;max-width:560px}}
+@media(max-width:600px){.hero-badge{font-size:12.5px;line-height:1.35}.hero-x:before{background:linear-gradient(180deg,rgba(3,7,15,.55),rgba(3,7,15,.75))}.hero-inner{padding:110px 18px 70px}.hero-search{padding:6px 6px 6px 14px;border-radius:16px}.hero-search input{font-size:15px}.hero-search button{padding:12px 14px;font-size:14px}.hero-card{padding:16px;border-radius:22px}.hero-caption{left:18px}}
+@media (prefers-reduced-motion:reduce){.hero-badge i,.hero-dial i{animation:none}}
