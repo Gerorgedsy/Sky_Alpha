@@ -85,7 +85,7 @@
     if (!SAMPLE) meta.append(node('span', `pred-pill ${stale ? 'pred-pill-stale' : 'pred-pill-live'}`, stale ? 'Out of date' : 'Current'));
     meta.append(
       node('span', null, `Updated ${ago(data.generatedMs)}`),
-      node('small', null, `${day.format(data.generatedMs)}, ${clock.format(data.generatedMs)} ET · model ${model()?.name || 'not published'}`),
+      node('small', null, `${day.format(data.generatedMs)}, ${clock.format(data.generatedMs)} ET`),
     );
     if (stale && !SAMPLE) {
       banner.hidden = false;
