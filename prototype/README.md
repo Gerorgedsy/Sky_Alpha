@@ -22,4 +22,6 @@ After changing `template.html`, run `python3 prototype/build_site.py` from the r
 
 ## Deployment
 
+`index.html` loads its CSS and JavaScript with a `?v=` version suffix so visitors get new files right after a deploy instead of a cached copy. Change that suffix on every stylesheet and script tag whenever you edit one of those files.
+
 GitHub Pages serves `prototype/index.html` at `https://gerorgedsy.github.io/Sky_Alpha/prototype/` from the configured branch. Push the `prototype/` files to update the public frontend. The backend is a separate public Sites Worker with its project ID in `live-service/.openai/hosting.json`; changes to `live-service/` also require a new Sites deployment. No API key is committed. For a faster upstream refresh, obtain an adsb.lol key, store it as a backend runtime secret, and adjust `REFRESH_SECONDS` within the provider's quota.
