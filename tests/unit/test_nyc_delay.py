@@ -96,8 +96,9 @@ def test_stand_in_skips_days_cut_off_by_the_record_edges(flights):
     reference = nyc_delay.schedule_reference(flights)
     last = nyc_delay.direction_frame(reference, "departure")["local_date"].max()
     target = (last + pd.Timedelta(days=7)).date()
-    _, source = nyc_delay.stand_in(reference, "departure", target)
-    assert pd.Timestamp(source) == last - pd.Timedelta(days=7)
+    for direction in nyc_delay.DIRECTIONS:
+        _, source = nyc_delay.stand_in(reference, direction, target)
+        assert pd.Timestamp(source) == last - pd.Timedelta(days=7)
 
 
 def test_payload_has_calls_minutes_and_confidence(flights, models):
