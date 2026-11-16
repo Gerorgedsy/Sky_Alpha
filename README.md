@@ -239,8 +239,9 @@ writes them twice an hour with `python -m skydelay.live.snapshot`:
   terminal, gate, baggage and status. Add a free key from
   [airlabs.co](https://airlabs.co/signup) as the repository secret
   `AIRLABS_API_KEY` (Settings → Secrets and variables → Actions). Schedules are
-  refreshed at most every six hours, about 720 of the free plan's 1,000 monthly
-  requests; run the workflow by hand with *force schedules* to refresh now.
+  refreshed on a budget that fits the free plan's 1,000 monthly requests; run the workflow by hand with *force schedules* to refresh now.
+  Departures refresh every three hours (they feed the delay model) and
+  arrivals every twelve, about 900 requests a month.
 
 ### Daily delay predictions
 
@@ -257,10 +258,28 @@ arrivals, gets three things from
   like it that went the same way as the call (separate quantile models for
   late and on-time flights), and the estimated time.
 
-The models use what the published schedule says: airport, airline, the other
-airport, local time, weekday, month, holiday proximity, block time, distance
-and how busy the airport is around the flight. BTS data arrives about two
-months late, so there is no live delay or weather input yet.
+Inputs are what is known when the prediction is made
+([`nyc_context`](src/skydelay/models/nyc_context.py)):
+
+- **schedule**: airport, airline, the other airport, local time, weekday,
+  month, a near-holiday flag, block time, distance, and how busy the airport is
+  around the flight;
+- **weather**: the latest METAR at the airport (wind, gusts, visibility,
+  ceiling, precipitation, thunderstorms, temperature and dew-point spread);
+- **how late flights are running**: the mean delay and share of 30+ minute
+  delays among the airport's departures in the last three hours, and the
+  New York average;
+- **how far ahead** the flight is.
+
+Training rebuilds the weather and delay inputs for a random prediction time
+up to 30 hours before each historical flight, from the Iowa Environmental
+Mesonet METAR archive and the BTS flights that had left by then. Live scoring
+reads the NOAA METARs and the AirLabs sample of recent departures that the
+site already collects. The live delay sample is about a dozen flights, so
+training draws the same number at random, and it hides the live inputs on
+some rows so the model still works when a feed is down. The scorecard reports
+accuracy with and without the live inputs and by how far ahead the prediction
+was made.
 
 **Stand-in schedule.** No free feed lists tomorrow's flights, so the flights
 and times are copied from the latest same-weekday flights in BTS records onto
@@ -272,7 +291,7 @@ change, especially across seasons.
 | Workflow | When | What |
 |---|---|---|
 | [Train delay models](.github/workflows/train-models.yml) | 12th of each month, or by hand | Finds the newest BTS month, downloads 12 months for New York, cleans them, trains and evaluates both directions, and force-pushes `departure.joblib`, `arrival.joblib`, `metrics.json` and `schedule.parquet` to the `model-artifacts` branch; the run summary shows the holdout scorecard |
-| [Live airport data](.github/workflows/live-data.yml) | twice an hour | Re-scores today and tomorrow when the predictions are over six hours old, a new day starts, or the models change, and publishes `predictions.json` to the `live-data` branch |
+| [Live airport data](.github/workflows/live-data.yml) | twice an hour | Fetches weather and FAA status (every run) and AirLabs departures (every 3 h) and arrivals (every 12 h), re-scores today and tomorrow with them, and publishes `predictions.json` to the `live-data` branch |
 
 The page reads `predictions.json` from `live-data` and falls back to
 `prototype/data/predictions.json`. To run the steps yourself:
@@ -280,9 +299,11 @@ The page reads `predictions.json` from `live-data` and falls back to
 ```bash
 PYTHONPATH=src python -m skydelay.models.nyc_delay prepare --work work --months 12
 PYTHONPATH=src python -m skydelay.models.nyc_delay train \
-  --flights work/processed/flights.parquet --output artifacts/nyc
+  --flights work/processed/flights.parquet --metar work/processed/metar.csv \
+  --output artifacts/nyc
 PYTHONPATH=src python -m skydelay.models.nyc_delay predict \
-  --artifacts artifacts/nyc --output prototype/data/predictions.json
+  --artifacts artifacts/nyc --output prototype/data/predictions.json \
+  --operations live/operations.json --schedules live/schedules.json
 ```
 
 The holdout scorecard (`metrics.json`) reports accuracy, precision, recall,

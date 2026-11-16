@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
       force_predictions:
-        description: "Re-score today's and tomorrow's flights now"
+        description: "Kept for the training job's trigger; every run re-scores"
         type: boolean
         default: false
 
@@ -57,35 +57,17 @@ jobs:
           python -m skydelay.live.snapshot --output live \
             ${{ inputs.force_schedules && '--force-schedules' || '' }}
 
-      # Delay predictions for today and tomorrow (New York time), re-scored
-      # every six hours, at midnight, or when the models change.
-      - name: Check whether predictions need refreshing
+      # Delay predictions for today and tomorrow (New York time), re-scored on
+      # every run with the weather and departure delays just fetched.
+      - name: Fetch the trained models
         id: predictions
         run: |
-          if ! git fetch --depth=1 origin model-artifacts 2>/dev/null; then
-            echo "No trained models yet."; echo "run=false" >> "$GITHUB_OUTPUT"; exit 0
+          if git fetch --depth=1 origin model-artifacts 2>/dev/null; then
+            mkdir -p models && git archive FETCH_HEAD | tar -x -C models
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No trained models yet."; echo "run=false" >> "$GITHUB_OUTPUT"
           fi
-          mkdir -p models && git archive FETCH_HEAD | tar -x -C models
-          python - "${{ inputs.force_predictions }}" >> "$GITHUB_OUTPUT" <<'PY'
-          import json, sys
-          from datetime import datetime, timedelta, timezone
-          from pathlib import Path
-          from zoneinfo import ZoneInfo
-          force = sys.argv[1] == "true"
-          path = Path("live/predictions.json")
-          stale = True
-          if path.exists():
-              body = json.loads(path.read_text())
-              made = datetime.fromisoformat(body["generated_at"].replace("Z", "+00:00"))
-              trained = json.loads(Path("models/metrics.json").read_text()).get("trained_at")
-              ny = ZoneInfo("America/New_York")
-              stale = (
-                  datetime.now(timezone.utc) - made > timedelta(hours=6)
-                  or made.astimezone(ny).date() != datetime.now(ny).date()
-                  or (trained and datetime.fromisoformat(trained) > made)
-              )
-          print(f"run={'true' if force or stale else 'false'}")
-          PY
 
       - name: Install prediction dependencies
         if: steps.predictions.outputs.run == 'true'
@@ -95,7 +77,10 @@ jobs:
         if: steps.predictions.outputs.run == 'true'
         env:
           PYTHONPATH: src
-        run: python -m skydelay.models.nyc_delay predict --artifacts models --output live/predictions.json --days 2
+        run: |
+          python -m skydelay.models.nyc_delay predict --artifacts models \
+            --output live/predictions.json --days 2 \
+            --operations live/operations.json --schedules live/schedules.json
 
       - name: Publish to the live-data branch
         working-directory: live

@@ -49,7 +49,7 @@ jobs:
       - name: Train and evaluate
         env:
           PYTHONPATH: src
-        run: python -m skydelay.models.nyc_delay train --flights work/processed/flights.parquet --output artifacts-out
+        run: python -m skydelay.models.nyc_delay train --flights work/processed/flights.parquet --metar work/processed/metar.csv --output artifacts-out
 
       - name: Publish to the model-artifacts branch
         working-directory: artifacts-out
@@ -81,10 +81,16 @@ jobs:
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
           m = json.load(open("artifacts-out/metrics.json"))
-          print("| Direction | Test flights | Delay rate | Accuracy | Recall | Brier (naive) | MAE min (zero) | 80% range |")
-          print("|---|---|---|---|---|---|---|---|")
+          print("| Direction | Test flights | Delay rate | Accuracy | Recall | ROC AUC | Brier (base rate) | Brier without live inputs | MAE min (zero) |")
+          print("|---|---|---|---|---|---|---|---|---|")
           for d in ("departure", "arrival"):
-              x = m[d]
-              print(f"| {d} | {x['test_rows']:,} | {x['delay_rate']:.1%} | {x['accuracy']:.1%} | {x['recall']:.1%} | "
-                    f"{x['brier_score']:.3f} ({x['naive_brier_score']:.3f}) | {x['mae_minutes']:.1f} ({x['mae_minutes_predict_zero']:.1f}) | {x['range_80_coverage']:.0%} |")
+              x = m[d]; w = x["without_live_inputs"]
+              print(f"| {d} | {x['test_rows']:,} | {x['delay_rate']:.1%} | {x['accuracy']:.1%} | {x['recall']:.1%} | {x['roc_auc']:.3f} | "
+                    f"{x['brier_score']:.3f} ({x['naive_brier_score']:.3f}) | {w['brier_score']:.3f} | {x['mae_minutes']:.1f} ({x['mae_minutes_predict_zero']:.1f}) |")
+          print()
+          print("| Direction | Horizon | Flights | Accuracy | Recall | Precision | ROC AUC |")
+          print("|---|---|---|---|---|---|---|")
+          for d in ("departure", "arrival"):
+              for band, x in m[d]["by_horizon"].items():
+                  print(f"| {d} | {band} | {x['flights']:,} | {x['accuracy']:.1%} | {x['recall']:.1%} | {x['precision']:.1%} | {x['roc_auc']:.3f} |")
           PY

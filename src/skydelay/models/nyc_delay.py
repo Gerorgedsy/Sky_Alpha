@@ -24,11 +24,13 @@ Each bundle holds
   always shows a delay of 30+ minutes and an "on time" one less, with the
   range that flights like it actually had.
 
-Only information known from the published schedule is used: airport,
-airline, the other airport, local time, weekday, month, holiday proximity,
-block time, distance and how busy the airport's schedule is around the
-flight. BTS is published about two months late, so no live delay state is
-available; the scorecard says how well that works.
+Inputs are what is known when the prediction is made: the published
+schedule (airport, airline, the other airport, local time, weekday, month,
+holiday proximity, block time, distance, how busy the airport is around the
+flight), the latest weather observation at the airport, how late its
+departures have been running in the last three hours, and how far ahead the
+flight is. See :mod:`skydelay.models.nyc_context` for the weather and delay
+inputs and how training mirrors the live feeds.
 
 The stand-in schedule copies the latest same-weekday flights on record onto
 the target date at the same local times. Real schedules change, so the page
@@ -65,6 +67,7 @@ from sklearn.ensemble import (
 from sklearn.isotonic import IsotonicRegression
 
 from skydelay.evaluation.metrics import probability_scorecard
+from skydelay.models import nyc_context as ctx
 from skydelay.pipeline import schema
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -106,7 +109,7 @@ NUMERIC = (
     "local_hour",
     "day_of_week",
     "month",
-    "days_to_holiday",
+    "near_holiday",
     "block_min",
     "distance_mi",
     "hub_prev_60",
@@ -114,7 +117,7 @@ NUMERIC = (
     "hub_day_total",
     "carrier_hub_day",
 )
-FEATURES = (*CATEGORICAL, *NUMERIC)
+FEATURES = (*CATEGORICAL, *NUMERIC, *ctx.CONTEXT_COLUMNS)
 
 
 # ---------------------------------------------------------------- features
@@ -169,7 +172,9 @@ def build_features(frame: pd.DataFrame) -> pd.DataFrame:
     days = frame["local_date"].values.astype("datetime64[D]")
     holidays = _holidays(frame["local_date"].min(), frame["local_date"].max())
     gaps = np.abs(days[:, None] - holidays[None, :]).astype("timedelta64[D]")
-    out["days_to_holiday"] = np.minimum(gaps.min(axis=1).astype(int), 30)
+    # A coarse flag, not a day count: month, weekday and an exact count
+    # together would name individual dates and let the trees memorise them.
+    out["near_holiday"] = (gaps.min(axis=1).astype(int) <= 3).astype(int)
     out["block_min"] = pd.to_numeric(frame[schema.SCHED_BLOCK_MIN], errors="coerce")
     out["distance_mi"] = pd.to_numeric(frame[schema.DISTANCE_MI], errors="coerce")
     prev = np.zeros(len(frame), dtype=int)
@@ -251,7 +256,8 @@ def _classifier() -> HistGradientBoostingClassifier:
         learning_rate=0.06,
         max_iter=350,
         max_leaf_nodes=31,
-        min_samples_leaf=80,
+        min_samples_leaf=300,
+        max_features=0.7,
         l2_regularization=1.0,
         early_stopping=False,
         random_state=0,
@@ -266,17 +272,34 @@ def _regressor(alpha: float) -> HistGradientBoostingRegressor:
         learning_rate=0.06,
         max_iter=250,
         max_leaf_nodes=31,
-        min_samples_leaf=80,
+        min_samples_leaf=300,
+        max_features=0.7,
         early_stopping=False,
         random_state=0,
     )
 
 
-def labelled(flights: pd.DataFrame, direction: str) -> tuple[pd.DataFrame, ...]:
+@dataclass
+class History:
+    """Historical context: METAR weather and hourly airport delay state."""
+
+    weather: pd.DataFrame
+    state: pd.DataFrame
+
+
+def labelled(
+    flights: pd.DataFrame, direction: str, history: History
+) -> tuple[pd.DataFrame, ...]:
     """Features, label and delay minutes for flights that operated."""
     _, _, _, delay_col, label_col = DIRECTIONS[direction]
     frame = direction_frame(flights, direction)
-    features = build_features(frame)
+    features = pd.concat(
+        [
+            build_features(frame),
+            ctx.training_context(frame, history.weather, history.state),
+        ],
+        axis=1,
+    )
     keep = frame[label_col].notna() & frame[delay_col].notna()
     label = frame.loc[keep, label_col].astype(bool).astype(int)
     minutes = frame.loc[keep, delay_col].astype(float).clip(*CLIP)
@@ -313,9 +336,18 @@ def _split_days(dates: pd.Series, days: int) -> pd.Series:
     return dates >= dates.max() - pd.Timedelta(days=days - 1)
 
 
-def evaluate(flights: pd.DataFrame, direction: str) -> dict[str, Any]:
+def _brief(y: np.ndarray, p: np.ndarray) -> dict[str, Any]:
+    card = probability_scorecard(y, p, threshold=0.5)
+    keys = ("accuracy", "precision", "recall", "brier_score", "roc_auc")
+    out = {k: card[k] for k in keys if k in card}
+    out["recall_at_0.3"] = float(np.mean(p[y == 1] >= 0.3)) if y.any() else None
+    out["flights"] = len(y)
+    return out
+
+
+def evaluate(flights: pd.DataFrame, direction: str, history: History) -> dict[str, Any]:
     """Train on older data and score the final ``HOLDOUT_DAYS`` days."""
-    frame, features, label, minutes = labelled(flights, direction)
+    frame, features, label, minutes = labelled(flights, direction, history)
     dates = frame["local_date"]
     holdout = _split_days(dates, HOLDOUT_DAYS)
     development = ~holdout
@@ -349,8 +381,21 @@ def evaluate(flights: pd.DataFrame, direction: str) -> dict[str, Any]:
         for b in bins.categories
         if (bins == b).sum()
     ]
+    # The same model with no weather or delay inputs, as when feeds are down,
+    # and accuracy by how far ahead the prediction was made.
+    blind = features[holdout].copy()
+    blind[list(ctx.WEATHER_COLUMNS + ctx.STATE_COLUMNS)] = np.nan
+    without = _brief(y, model.predict(blind)["delay_probability"].to_numpy())
+    horizon = features.loc[holdout, "horizon_h"].to_numpy()
+    by_horizon = {}
+    for name, low, high in (("0-3h", 0, 3), ("3-8h", 3, 8), ("8-30h", 8, 31)):
+        rows = (horizon >= low) & (horizon < high)
+        if rows.sum() and y[rows].any():
+            by_horizon[name] = _brief(y[rows], p[rows])
     scorecard.update(
         {
+            "without_live_inputs": without,
+            "by_horizon": by_horizon,
             "direction": direction,
             "test_rows": int(holdout.sum()),
             "train_rows": int(development.sum()),
@@ -373,10 +418,10 @@ def evaluate(flights: pd.DataFrame, direction: str) -> dict[str, Any]:
     return {k: v for k, v in scorecard.items() if not isinstance(v, np.ndarray)}
 
 
-def train(flights: pd.DataFrame, direction: str) -> DelayModel:
+def train(flights: pd.DataFrame, direction: str, history: History) -> DelayModel:
     """Evaluate on a holdout, then refit on all data for publishing."""
-    metrics = evaluate(flights, direction)
-    frame, features, label, minutes = labelled(flights, direction)
+    metrics = evaluate(flights, direction, history)
+    frame, features, label, minutes = labelled(flights, direction, history)
     calibration = _split_days(frame["local_date"], CALIBRATION_DAYS)
     model = fit(features, label, minutes, calibration, direction)
     model.metrics = metrics
@@ -454,11 +499,25 @@ def _iso(value: pd.Timestamp) -> str:
     return value.tz_convert("UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+@dataclass
+class Live:
+    """Live context: snapshot weather and delay state, and the scoring time."""
+
+    weather: pd.DataFrame
+    state: pd.DataFrame
+    now: datetime
+
+    @classmethod
+    def empty(cls, now: datetime) -> Live:
+        return cls(ctx.live_weather({}), ctx.live_state({}), now)
+
+
 def predict_days(
     models: dict[str, DelayModel],
     reference: pd.DataFrame,
     targets: list[date],
     *,
+    live: Live,
     threshold: float = 0.5,
 ) -> tuple[list[dict[str, Any]], dict[str, dict[str, str]]]:
     """Score stand-in schedules for each target date and direction."""
@@ -470,7 +529,14 @@ def predict_days(
             if rows.empty:
                 continue
             sources.setdefault(target.isoformat(), {})[direction] = str(source_day)
-            result = model.predict(build_features(rows))
+            features = pd.concat(
+                [
+                    build_features(rows),
+                    ctx.live_context(rows, live.now, live.weather, live.state),
+                ],
+                axis=1,
+            )
+            result = model.predict(features, threshold)
             for row, pred in zip(
                 rows.to_dict("records"), result.to_dict("records"), strict=True
             ):
@@ -509,8 +575,24 @@ def payload(
     threshold: float = 0.5,
     generated_at: datetime | None = None,
     trained_at: str | None = None,
+    live: Live | None = None,
 ) -> dict[str, Any]:
     generated = (generated_at or datetime.now(UTC)).astimezone(UTC)
+    inputs: dict[str, Any] = {}
+    if live is not None:
+        if not live.weather.empty:
+            inputs["weather_observed_at"] = _iso(live.weather["valid_utc"].max())
+        if not live.state.empty:
+            inputs["airport_delays_at"] = _iso(pd.Timestamp(live.state["at_utc"].max()))
+            inputs["airport_delays"] = {
+                row["hub"]: {
+                    "mean_delay_min": None
+                    if pd.isna(row["state_mean_delay"])
+                    else round(float(row["state_mean_delay"]), 1),
+                    "flights": int(row["state_flights"]),
+                }
+                for row in live.state.to_dict("records")
+            }
     validation_keys = (
         "accuracy",
         "precision",
@@ -528,13 +610,16 @@ def payload(
         "within_15_min",
         "range_80_coverage",
         "range_80_coverage_when_correct",
+        "without_live_inputs",
+        "by_horizon",
     )
     return {
         "schema_version": 3,
         "status": "published" if flights else "no_flights",
         "sample": False,
         "generated_at": generated.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "stale_after_minutes": 36 * 60,
+        "stale_after_minutes": 180,
+        "inputs": inputs,
         "schedule": {
             "basis": "typical",
             "source_dates": sources,
@@ -550,6 +635,7 @@ def payload(
                     "target": f"{direction.title()} {DELAY_MIN}+ minutes late",
                     "threshold": threshold,
                     "horizon_hours": None,
+                    "live_inputs": ["weather", "airport_delays"],
                     "trained_at": trained_at,
                     "validation": {
                         k: model.metrics[k]
@@ -621,6 +707,11 @@ def prepare(work: Path, months: int, config_path: Path = DEFAULT_CONFIG) -> Path
         subprocess.run(
             [sys.executable, "-m", *command, "--config", str(nyc_config)], check=True
         )
+    ctx.download_metar(
+        pd.Timestamp(config["window"]["start_utc"]) - pd.Timedelta(days=2),
+        pd.Timestamp(config["window"]["end_utc"]),
+        processed / "metar.csv",
+    )
     return processed / "flights.parquet"
 
 
@@ -638,22 +729,29 @@ def main() -> None:
     p_prep.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     p_train = sub.add_parser("train", help="fit and evaluate both directions")
     p_train.add_argument("--flights", type=Path, required=True)
+    p_train.add_argument("--metar", type=Path, required=True)
     p_train.add_argument("--output", type=Path, required=True)
     p_pred = sub.add_parser("predict", help="publish predictions.json")
     p_pred.add_argument("--artifacts", type=Path, required=True)
     p_pred.add_argument("--output", type=Path, required=True)
     p_pred.add_argument("--days", type=int, default=2)
     p_pred.add_argument("--threshold", type=float, default=0.5)
+    p_pred.add_argument("--operations", type=Path, help="live operations.json")
+    p_pred.add_argument("--schedules", type=Path, help="live schedules.json")
     args = parser.parse_args()
 
     if args.command == "prepare":
         print(prepare(args.work, args.months, args.config))
     elif args.command == "train":
         flights = pd.read_parquet(args.flights)
+        history = History(
+            weather=ctx.metar_table(pd.read_csv(args.metar, low_memory=False)),
+            state=ctx.state_table(flights),
+        )
         args.output.mkdir(parents=True, exist_ok=True)
         summary: dict[str, Any] = {"trained_at": datetime.now(UTC).isoformat()}
         for direction in DIRECTIONS:
-            model = train(flights, direction)
+            model = train(flights, direction, history)
             joblib.dump(model, args.output / f"{direction}.joblib", compress=3)
             summary[direction] = model.metrics
             print(json.dumps({direction: model.metrics}, indent=1, default=str))
@@ -672,8 +770,20 @@ def main() -> None:
         reference = pd.read_parquet(args.artifacts / "schedule.parquet")
         today = pd.Timestamp.now(TIMEZONE).date()
         targets = [today + timedelta(days=i) for i in range(args.days)]
+
+        def snapshot(path: Path | None) -> dict[str, Any]:
+            try:
+                return json.loads(path.read_text()) if path else {}
+            except (OSError, ValueError):
+                return {}
+
+        live = Live(
+            weather=ctx.live_weather(snapshot(args.operations)),
+            state=ctx.live_state(snapshot(args.schedules)),
+            now=datetime.now(UTC),
+        )
         flights, sources = predict_days(
-            models, reference, targets, threshold=args.threshold
+            models, reference, targets, live=live, threshold=args.threshold
         )
         trained_at = None
         metrics_path = args.artifacts / "metrics.json"
@@ -685,6 +795,7 @@ def main() -> None:
             sources,
             threshold=args.threshold,
             trained_at=trained_at,
+            live=live,
         )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(body, separators=(",", ":")) + "\n")
