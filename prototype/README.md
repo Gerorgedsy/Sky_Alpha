@@ -13,14 +13,18 @@ pill, a large gradient headline, frosted cards and white pill buttons.
   Newark) and jumps to the matching predictions; the *Try* chips open common
   views. The **Right now** card lists each airport's FAA events and weather from
   the same feed as the conditions section.
-- **Delay predictions** (`predictions.js`, `predictions.css`). Reads
-  [`data/predictions.json`](data/predictions.json) and shows, per airport and for
-  departures or arrivals, each upcoming flight's *delayed* (30+ min) / *on time*
-  call and model confidence, with search, filters, sorting and summary tiles. It
-  re-reads the file every five minutes, marks predictions older than
-  `stale_after_minutes` as out of date, and shows an explicit empty state before
-  the first publish. Regenerate the file with
-  `python -m skydelay.models.publish_predictions` (see the root README).
+- **Delay predictions** (`predictions.js`, `predictions.css`). Every flight at
+  the three airports today and tomorrow, per airport and for departures or
+  arrivals: the *delayed* (30+ min) / *on time* call, model confidence, expected
+  delay with its typical range, and estimated time, with search, filters
+  (including *Longest expected delay*), sorting and summary tiles. It reads
+  `predictions.json` from the `live-data` branch (written by
+  `skydelay.models.nyc_delay predict` in the **Live airport data** workflow)
+  and falls back to [`data/predictions.json`](data/predictions.json). It
+  re-reads every five minutes, marks predictions older than
+  `stale_after_minutes` as out of date, shows the stand-in schedule note and the
+  model's holdout scores, and shows an explicit empty state before the first
+  publish.
 - **Flight schedules and gates** (`operations.js`). Departures / arrivals and
   airport switches; recent and in-air flights with terminal, gate or baggage,
   status and delay. On the AirLabs free plan this is a sample of current
@@ -40,8 +44,8 @@ pill, a large gradient headline, frosted cards and white pill buttons.
 URL options: `?sample=1` previews the predictions board with illustrative data
 from [`data/predictions.sample.json`](data/predictions.sample.json);
 `?view=arrivals` opens the arrivals board; `?airport=LGA` opens an airport;
-`?liveData=<url>` points conditions and flight boards at another snapshot
-location (for testing).
+`?liveData=<url>` points predictions, conditions and flight boards at another
+snapshot location (for testing).
 
 ## Where the live data comes from
 

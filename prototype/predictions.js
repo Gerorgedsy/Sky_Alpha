@@ -9,7 +9,10 @@
   'use strict';
   const params = new URLSearchParams(location.search);
   const SAMPLE = params.has('sample');
-  const SOURCE = SAMPLE ? 'data/predictions.sample.json' : 'data/predictions.json';
+  // Published predictions live on the live-data branch, refreshed by the
+  // "Live airport data" workflow; the copy in this folder is the fallback.
+  const SNAPSHOT = (params.get('liveData') || 'https://raw.githubusercontent.com/Gerorgedsy/Sky_Alpha/live-data').replace(/\/$/, '');
+  const SOURCES = SAMPLE ? ['data/predictions.sample.json'] : [`${SNAPSHOT}/predictions.json`, 'data/predictions.json'];
   const REFRESH_MS = 5 * 60 * 1000;
   const AIRPORTS = ['JFK', 'LGA', 'EWR'];
   const SHORT = {JFK: 'Kennedy', LGA: 'LaGuardia', EWR: 'Newark'};
@@ -36,6 +39,8 @@
     return hours < 48 ? `${hours} h ${minutes % 60} min ago` : `${Math.floor(hours / 24)} days ago`;
   };
   const flightLabel = (f) => (f.carrier && f.flight.startsWith(f.carrier) ? `${f.carrier} ${f.flight.slice(f.carrier.length)}` : f.flight);
+  const minutes = (value) => (Math.abs(value) >= 60 ? `${Math.floor(Math.abs(value) / 60)} h ${Math.abs(value) % 60} min` : `${Math.abs(value)} min`);
+  const hasMinutes = (f) => Number.isFinite(f.predicted_delay_min);
   const band = (confidence) => (confidence >= 0.8 ? 'High' : confidence >= 0.65 ? 'Medium' : 'Low');
   const route = (f) => (f.direction === 'arrival' ? `${f.origin || '—'} → ${f.airport}` : `${f.airport} → ${f.dest || '—'}`);
 
@@ -137,10 +142,29 @@
     const mean = flights.length ? flights.reduce((s, f) => s + f.confidence, 0) / flights.length : null;
     summary.append(
       tile(`${words.plural} predicted`, String(flights.length), state.showPast ? words.done : words.still),
-      tile('Predicted delayed', String(delayed), flights.length ? `${pct(delayed / flights.length)} of ${words.lower} · 30+ min` : '—', 'delayed'),
+      tile('Predicted delayed', String(delayed), flights.length ? `${pct(delayed / flights.length)} of ${words.lower}${lateAverage(flights)}` : '—', 'delayed'),
       tile('Predicted on time', String(onTime), flights.length ? `${pct(onTime / flights.length)} of ${words.lower}` : '—', 'ontime'),
       tile('Average confidence', mean == null ? '—' : pct(mean), mean == null ? 'No flights' : `${band(mean)} on average`),
     );
+  }
+
+  function lateAverage(flights) {
+    const late = flights.filter((f) => f.prediction === 'delayed' && hasMinutes(f));
+    if (!late.length) return ' · 30+ min';
+    return ` · about ${minutes(Math.round(late.reduce((s, f) => s + Math.max(f.predicted_delay_min, 0), 0) / late.length))} late`;
+  }
+
+  function expectedCell(flight) {
+    const cell = node('span', 'pred-expect');
+    if (!hasMinutes(flight)) { cell.append(node('span', 'pred-muted', '—')); return cell; }
+    const median = flight.predicted_delay_min;
+    const text = median >= 5 ? `+${minutes(median)}` : median <= -5 ? `${minutes(median)} early` : 'On schedule';
+    cell.append(node('strong', median >= 15 ? 'is-late' : null, text));
+    if (Number.isFinite(flight.delay_low_min) && Number.isFinite(flight.delay_high_min)) {
+      const fmt = (v) => (v > 0 ? `+${v}` : String(v));
+      cell.append(node('small', null, `${flight.prediction === 'delayed' ? 'if late' : 'typically'} ${fmt(flight.delay_low_min)} to ${fmt(flight.delay_high_min)} min`));
+    }
+    return cell;
   }
 
   function confidenceCell(flight) {
@@ -171,6 +195,8 @@
       .filter((f) => !query || `${f.flight} ${flightLabel(f)} ${f.origin} ${f.dest}`.toUpperCase().includes(query));
     flights = flights.slice().sort(state.sort === 'confidence'
       ? (a, b) => b.confidence - a.confidence || a.scheduled - b.scheduled
+      : state.sort === 'longest'
+        ? (a, b) => (b.predicted_delay_min ?? -999) - (a.predicted_delay_min ?? -999) || a.scheduled - b.scheduled
       : state.sort === 'risk'
         ? (a, b) => (b.delay_probability ?? 0) - (a.delay_probability ?? 0) || a.scheduled - b.scheduled
         : (a, b) => a.scheduled - b.scheduled || a.flight.localeCompare(b.flight));
@@ -182,7 +208,7 @@
       return;
     }
     const head = node('div', 'pred-row pred-colhead');
-    [words.time, 'Flight', words.other, 'Prediction', 'Model confidence'].forEach((label) => head.append(node('span', null, label)));
+    [words.time, 'Flight', words.other, 'Prediction', 'Expected delay', 'Model confidence'].forEach((label) => head.append(node('span', null, label)));
     head.setAttribute('aria-hidden', 'true');
     table.append(head);
     const list = node('ul', 'pred-list');
@@ -191,10 +217,11 @@
       const past = isPast(f);
       const row = node('li', `pred-row${past ? ' is-past' : ''}`);
       const when = node('span', 'pred-time');
-      when.append(node('strong', null, clock.format(f.scheduled)), node('small', null, past ? 'Scheduled time passed' : day.format(f.scheduled)));
+      const estimate = hasMinutes(f) && f.predicted_delay_min >= 5 ? `est. ${clock.format(f.scheduled + f.predicted_delay_min * 60000)}` : null;
+      when.append(node('strong', null, clock.format(f.scheduled)), node('small', estimate && f.predicted_delay_min >= 15 ? 'is-late' : null, past ? 'Scheduled time passed' : estimate || day.format(f.scheduled)));
       const delayed = f.prediction === 'delayed';
       row.append(when, node('strong', 'pred-flight', flightLabel(f)), node('span', 'pred-dest', route(f)),
-        node('span', `pred-status ${delayed ? 'is-delayed' : 'is-ontime'}`, delayed ? 'Delayed 30+ min' : 'On time'), confidenceCell(f));
+        node('span', `pred-status ${delayed ? 'is-delayed' : 'is-ontime'}`, delayed ? 'Delayed 30+ min' : 'On time'), expectedCell(f), confidenceCell(f));
       row.title = `Probability of a 30+ minute delay: ${pct(f.delay_probability ?? (delayed ? f.confidence : 1 - f.confidence))}`;
       row.setAttribute('aria-label', `${flightLabel(f)} ${route(f).replace('→', 'to')}, ${state.direction === 'arrival' ? 'arrives' : 'departs'} ${clock.format(f.scheduled)} Eastern: predicted ${delayed ? 'delayed 30 minutes or more' : 'on time'}, ${pct(f.confidence)} confidence`);
       list.append(row);
@@ -209,13 +236,18 @@
     const method = $('#predMethod');
     method.replaceChildren();
     const threshold = Number.isFinite(current.threshold) ? pct(current.threshold) : '50%';
-    method.append(node('p', null, `A flight is called delayed when the model’s probability of ${verb} 30 or more minutes late reaches ${threshold}. Confidence is the model’s probability for the call it made, so it ranges from 50% (a toss-up) to 100%. Predictions are made about ${current.horizon_hours || 2} hours before the scheduled time.`));
+    const timing = Number.isFinite(current.horizon_hours)
+      ? `Predictions are made about ${current.horizon_hours} hours before the scheduled time.`
+      : 'Predictions cover the whole day and use the schedule alone (airline, route, local time, airport traffic and holidays), not live weather or delays.';
+    method.append(node('p', null, `A flight is called delayed when the model’s probability of ${verb} 30 or more minutes late reaches ${threshold}. Confidence is the model’s probability for the call it made, from 50% (a toss-up) to 100%. Expected delay is the model’s median for flights like this one that went the way of the call, with the range 80% of them fell in. ${timing}`));
+    if (state.data.schedule?.note) method.append(node('p', null, state.data.schedule.note));
     const v = current.validation || {};
     if (Number.isFinite(v.accuracy)) {
       const parts = [`accuracy ${pct(v.accuracy)}`];
       if (Number.isFinite(v.recall)) parts.push(`recall on delays ${pct(v.recall)}`);
       if (Number.isFinite(v.precision)) parts.push(`precision ${pct(v.precision)}`);
       if (Number.isFinite(v.brier_score)) parts.push(`Brier score ${v.brier_score.toFixed(3)}`);
+      if (Number.isFinite(v.mae_minutes)) parts.push(`typical delay error ${Math.round(v.mae_minutes)} min`);
       const scope = v.test_rows ? ` on ${Number(v.test_rows).toLocaleString()} held-out flights` : '';
       method.append(node('p', 'pred-validation', `${WORDS[state.direction].plural} model validation${scope}: ${parts.join(' · ')}.`));
     }
@@ -254,11 +286,21 @@
     renderMethod();
   }
 
+  async function fetchFirst() {
+    for (const source of SOURCES) {
+      try {
+        const response = await fetch(`${source}?t=${Math.floor(Date.now() / 60000)}`, {cache: 'no-store'});
+        if (!response.ok) continue;
+        const body = await response.json();
+        if (body && Array.isArray(body.flights)) return body;
+      } catch { /* try the next source */ }
+    }
+    throw new Error('No predictions source answered');
+  }
+
   async function load() {
     try {
-      const response = await fetch(`${SOURCE}?t=${Date.now()}`, {cache: 'no-store'});
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      state.data = normalise(await response.json());
+      state.data = normalise(await fetchFirst());
       render();
     } catch {
       if (state.data) { renderMeta(); return; }

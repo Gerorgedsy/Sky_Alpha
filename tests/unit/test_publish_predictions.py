@@ -184,7 +184,7 @@ def test_validation_reads_one_model_from_a_comparison(tmp_path):
 @pytest.mark.parametrize("name", ["predictions.json", "predictions.sample.json"])
 def test_site_files_match_the_published_format(name):
     payload = json.loads((SITE_DATA / name).read_text())
-    assert payload["schema_version"] == 2
+    assert payload["schema_version"] in {2, 3}
     assert set(payload["airports"]) == {"JFK", "LGA", "EWR"}
     assert set(payload["models"]) == {"departure", "arrival"}
     for flight in payload["flights"]:

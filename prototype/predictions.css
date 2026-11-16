@@ -48,7 +48,7 @@
 .pred-check{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;color:var(--muted);font-weight:700;padding-bottom:8px}
 .pred-table{border-top:1px solid var(--line)}
 .pred-list{list-style:none;margin:0;padding:0;max-height:620px;overflow:auto}
-.pred-row{display:grid;grid-template-columns:120px 100px minmax(110px,1fr) 150px minmax(170px,220px);gap:14px;align-items:center;padding:11px 28px;border-bottom:1px solid var(--line);font-size:13px}
+.pred-row{display:grid;grid-template-columns:120px 96px minmax(100px,1fr) 140px 150px minmax(160px,210px);gap:14px;align-items:center;padding:11px 28px;border-bottom:1px solid var(--line);font-size:13px}
 .pred-list .pred-row:last-child{border-bottom:0}
 .pred-list .pred-row:hover{background:#f6fafb}
 .pred-colhead{background:#f5f8fa;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.6px;font-weight:800;padding-top:9px;padding-bottom:9px}
@@ -78,6 +78,7 @@
 .pred-method p{font-size:12px;color:var(--muted);margin:0}
 .pred-method p+p{margin-top:5px}
 .pred-validation{color:var(--ink)!important;font-weight:650}
-@media(max-width:900px){.pred-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.pred-row{grid-template-columns:90px 1fr 130px;row-gap:6px}.pred-colhead{display:none}.pred-dest{grid-column:2;grid-row:2;font-size:12px}.pred-flight{grid-column:2;grid-row:1}.pred-time{grid-row:1/3}.pred-status{grid-column:3;grid-row:1;justify-self:end}.pred-conf{grid-column:3;grid-row:2}}
+@media(max-width:900px){.pred-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.pred-row{grid-template-columns:90px 1fr 130px;row-gap:6px}.pred-expect{grid-column:2;grid-row:3}.pred-expect small{display:inline;margin-left:6px}.pred-colhead{display:none}.pred-dest{grid-column:2;grid-row:2;font-size:12px}.pred-flight{grid-column:2;grid-row:1}.pred-time{grid-row:1/3}.pred-status{grid-column:3;grid-row:1;justify-self:end}.pred-conf{grid-column:3;grid-row:2}}
 @media(max-width:760px){.pred-head{display:block;padding:20px}.pred-meta{align-items:flex-start;text-align:left;margin-top:12px;white-space:normal}.pred-airports,.pred-summary,.pred-controls{padding-left:20px;padding-right:20px}.pred-banner{margin:0 20px 14px}.pred-direction{margin:0 20px 12px;display:flex}.pred-direction button{flex:1;justify-content:center}.pred-direction button small{display:none}.pred-row{padding:11px 20px}.pred-airport{padding:10px 12px}.pred-airport span{display:none}}
 @media(max-width:480px){.pred-airports{gap:6px}.pred-airport strong{font-size:17px}.pred-row{grid-template-columns:72px 1fr 112px;gap:8px}.pred-status{font-size:11px;padding:3px 8px}.pred-tile strong{font-size:22px}}
+.pred-expect strong{display:block;font-size:13px;font-variant-numeric:tabular-nums}.pred-expect small{display:block;font-size:11px;color:var(--muted)}.pred-expect strong.is-late{color:var(--amber)}.pred-time small.is-late{color:var(--amber);font-weight:700}.pred-muted{color:var(--soft)}

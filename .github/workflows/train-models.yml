@@ -1,0 +1,90 @@
+name: Train delay models
+
+# Downloads the newest BTS on-time months for JFK, LGA and EWR, trains the
+# departure and arrival delay models, and publishes them with their holdout
+# scorecard and a two-week schedule reference to the `model-artifacts` branch
+# (always a single commit). BTS publishes about two months late, so a monthly
+# run keeps the models and the stand-in schedule as fresh as the data allows.
+on:
+  schedule:
+    - cron: "23 7 12 * *"
+  workflow_dispatch:
+    inputs:
+      months:
+        description: "Months of BTS history to train on"
+        default: "12"
+
+concurrency:
+  group: train-models
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      # Only what training needs, at the versions requirements.txt pins. The
+      # same versions load the models in the prediction job.
+      - name: Install dependencies
+        run: |
+          pip install $(grep -E '^(numpy|pandas|pyarrow|scikit-learn|joblib|requests)==' requirements.txt)
+
+      - name: Download and clean BTS data
+        env:
+          PYTHONPATH: src
+        run: python -m skydelay.models.nyc_delay prepare --work work --months "${{ inputs.months || '12' }}"
+
+      - name: Train and evaluate
+        env:
+          PYTHONPATH: src
+        run: python -m skydelay.models.nyc_delay train --flights work/processed/flights.parquet --output artifacts-out
+
+      - name: Publish to the model-artifacts branch
+        working-directory: artifacts-out
+        run: |
+          cp ../work/sources_nyc.json .
+          cat > README.md <<'MD'
+          # SkyDelay NYC delay models
+
+          Written by the "Train delay models" workflow. `departure.joblib` and
+          `arrival.joblib` are `skydelay.models.nyc_delay.DelayModel` bundles;
+          `metrics.json` holds their holdout scorecards; `schedule.parquet` is the
+          two-week schedule reference for the stand-in schedule. Load them with
+          the scikit-learn version pinned in `requirements.txt`.
+          MD
+          git init -q -b model-artifacts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "chore: delay models trained $(date -u +%Y-%m-%d)"
+          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" model-artifacts
+
+      - name: Publish fresh predictions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run live-data.yml --ref "${{ github.ref_name }}" -f force_predictions=true
+
+      - name: Summary
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          m = json.load(open("artifacts-out/metrics.json"))
+          print("| Direction | Test flights | Delay rate | Accuracy | Recall | Brier (naive) | MAE min (zero) | 80% range |")
+          print("|---|---|---|---|---|---|---|---|")
+          for d in ("departure", "arrival"):
+              x = m[d]
+              print(f"| {d} | {x['test_rows']:,} | {x['delay_rate']:.1%} | {x['accuracy']:.1%} | {x['recall']:.1%} | "
+                    f"{x['brier_score']:.3f} ({x['naive_brier_score']:.3f}) | {x['mae_minutes']:.1f} ({x['mae_minutes_predict_zero']:.1f}) | {x['range_80_coverage']:.0%} |")
+          PY

@@ -65,11 +65,13 @@ available from OpenSky's flights-by-airport data, and taxi-out times from BTS.
 - `src/skydelay/pipeline/`: ingestion and cleaning
 - `src/skydelay/features/`: feature engineering (spatial grid, taxi-out delta, sector density)
 - `src/skydelay/models/`, `src/skydelay/evaluation/`: models and evaluation,
-  including `train_baseline --direction arrival` and `publish_predictions`
+  including the daily NYC delay models (`nyc_delay`), `train_baseline
+  --direction arrival` and `publish_predictions`
 - `src/skydelay/live/`: snapshots of FAA, NOAA and AirLabs data for the website
 - `prototype/`: the public website (GitHub Pages) and the 2023 forecast replay
 - `live-service/`: optional Cloudflare Worker backend for live feeds
-- `.github/workflows/`: CI, and the half-hourly **Live airport data** refresh
+- `.github/workflows/`: CI, the monthly **Train delay models** job and the
+  half-hourly **Live airport data** refresh
 - `demo/`: interactive pilot risk board with threshold and fallback controls
 - `docs/midsemester.md`: customer discovery, data, modeling, evaluation and risk plan
 - `config/sources.json`: hubs (codes, coordinates, timezones), study window, source settings
@@ -210,7 +212,7 @@ top to bottom:
 | Section | What it shows | Data |
 |---|---|---|
 | Hero | Flight / destination / airport search, shortcuts, and a **Right now** card with each airport's FAA status and weather | FAA NAS, NOAA METAR |
-| Delay predictions | Every upcoming departure and arrival called *delayed* (30+ min) or *on time*, with model confidence; Departures / Arrivals switch, per-airport tabs, summary tiles, search, filters and sort | `prototype/data/predictions.json` |
+| Delay predictions | Every departure and arrival today and tomorrow called *delayed* (30+ min) or *on time*, with model confidence, expected delay in minutes and estimated time; Departures / Arrivals switch, per-airport tabs, summary tiles, search, filters and sort | `predictions.json` on `live-data` |
 | Flight boards | Recent and in-air departures and arrivals with terminal, gate or baggage, status and how late they ran | AirLabs (free plan) |
 | Airport conditions | FAA ground stops, delay programs and closures, plus flight category, wind and visibility | FAA NAS, NOAA METAR |
 | Live airspace | Aircraft positions around New York on a plot and in a searchable list | adsb.lol via `live-service/` |
@@ -240,18 +242,61 @@ writes them twice an hour with `python -m skydelay.live.snapshot`:
   refreshed at most every six hours, about 720 of the free plan's 1,000 monthly
   requests; run the workflow by hand with *force schedules* to refresh now.
 
-### Publishing predictions
+### Daily delay predictions
 
-1. Train a departure and an arrival baseline (above). Arrival models are
-   trained with `--direction arrival`, use the `arr_delayed_30` label, and are
-   saved with an `_arrival` suffix, e.g.
-   `artifacts/models/baseline_1_schedule_arrival.joblib`.
-2. Export the next hours of flights to a CSV or Parquet file with `carrier`,
-   `flight_number`, `origin`, `dest`, `sched_block_min`, `distance_mi` and
-   `sched_dep_utc` and/or `sched_arr_utc` (a missing one is derived from the
-   other and the block time). Flights leaving JFK/LGA/EWR are scored as
-   departures, flights landing there as arrivals; others are ignored.
-3. Score and write the website file:
+Every flight scheduled at JFK, LGA and EWR today and tomorrow, departures and
+arrivals, gets three things from
+[`skydelay.models.nyc_delay`](src/skydelay/models/nyc_delay.py):
+
+- **the call**: *delayed* when the calibrated probability of a 30+ minute
+  delay is at least 50 %, otherwise *on time*;
+- **the confidence**: the probability of that call (50–100 %), from a
+  gradient-boosted classifier calibrated with isotonic regression on a later,
+  held-apart month;
+- **how late**: the median and 80 % range of the delay in minutes for flights
+  like it that went the same way as the call (separate quantile models for
+  late and on-time flights), and the estimated time.
+
+The models use what the published schedule says: airport, airline, the other
+airport, local time, weekday, month, holiday proximity, block time, distance
+and how busy the airport is around the flight. BTS data arrives about two
+months late, so there is no live delay or weather input yet.
+
+**Stand-in schedule.** No free feed lists tomorrow's flights, so the flights
+and times are copied from the latest same-weekday flights in BTS records onto
+the target day at the same local time. The page says so; real schedules
+change, especially across seasons.
+
+**Automation.**
+
+| Workflow | When | What |
+|---|---|---|
+| [Train delay models](.github/workflows/train-models.yml) | 12th of each month, or by hand | Finds the newest BTS month, downloads 12 months for New York, cleans them, trains and evaluates both directions, and force-pushes `departure.joblib`, `arrival.joblib`, `metrics.json` and `schedule.parquet` to the `model-artifacts` branch; the run summary shows the holdout scorecard |
+| [Live airport data](.github/workflows/live-data.yml) | twice an hour | Re-scores today and tomorrow when the predictions are over six hours old, a new day starts, or the models change, and publishes `predictions.json` to the `live-data` branch |
+
+The page reads `predictions.json` from `live-data` and falls back to
+`prototype/data/predictions.json`. To run the steps yourself:
+
+```bash
+PYTHONPATH=src python -m skydelay.models.nyc_delay prepare --work work --months 12
+PYTHONPATH=src python -m skydelay.models.nyc_delay train \
+  --flights work/processed/flights.parquet --output artifacts/nyc
+PYTHONPATH=src python -m skydelay.models.nyc_delay predict \
+  --artifacts artifacts/nyc --output prototype/data/predictions.json
+```
+
+The holdout scorecard (`metrics.json`) reports accuracy, precision, recall,
+Brier score against the base rate, calibration by probability band, delay
+error in minutes against predicting zero, and range coverage. Check it before
+quoting the model's accuracy; the pitch target is 85 % on 30+ minute delays.
+
+### Publishing with the baseline models
+
+`skydelay.models.publish_predictions` scores an upcoming schedule you supply
+with the logistic-regression baselines from `train_baseline` (two-hour
+horizon, optionally with HRRR weather) and writes the same file format. It
+needs a schedule with `carrier`, `flight_number`, `origin`, `dest`,
+`sched_block_min`, `distance_mi` and `sched_dep_utc` and/or `sched_arr_utc`:
 
 ```bash
 PYTHONPATH=src python -m skydelay.models.publish_predictions \
@@ -264,16 +309,8 @@ PYTHONPATH=src python -m skydelay.models.publish_predictions \
   --metrics-key baseline_2
 ```
 
-4. Commit `prototype/data/predictions.json` and push; GitHub Pages updates in a
-   minute or two, and open pages pick it up within five minutes.
-
-Either model can be left out; the page then shows that direction as not yet
-published. A flight is *delayed* when the predicted probability of a 30+ minute
-delay reaches `--threshold` (default 0.5). Confidence is the probability of the
-call made, so it runs from 50 % to 100 %. The page marks predictions older than
-`--stale-after-minutes` (default 180) as out of date. Because the baselines are
-trained with balanced class weights, their raw probabilities overstate delay
-risk; calibrate before treating confidence as a literal hit rate.
+The baselines use balanced class weights, so their raw probabilities overstate
+delay risk; calibrate before treating their confidence as a hit rate.
 
 ## Pilot demo
 
