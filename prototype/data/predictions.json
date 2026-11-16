@@ -1,15 +1,12 @@
 {
- "schema_version": 1,
+ "schema_version": 2,
  "status": "awaiting_model",
  "sample": false,
  "generated_at": null,
  "stale_after_minutes": 180,
- "model": {
-  "name": null,
-  "target": "Departure 30 or more minutes late",
-  "threshold": 0.5,
-  "horizon_hours": 2,
-  "validation": {}
+ "models": {
+  "departure": null,
+  "arrival": null
  },
  "airports": {
   "JFK": "John F. Kennedy International",

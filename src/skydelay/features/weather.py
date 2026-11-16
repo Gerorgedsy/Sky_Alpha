@@ -3,7 +3,8 @@
 For a departure scheduled at time ``t``, the prediction cutoff is ``t`` minus
 two hours.  A weather row is eligible only when ``available_at_utc`` is at or
 before that cutoff.  Among eligible forecasts, the join selects the newest run
-whose valid hour is closest to the scheduled departure.
+whose valid hour is closest to the scheduled departure.  Arrival predictions use
+the scheduled arrival time and the destination hub's forecast instead.
 """
 
 from __future__ import annotations
@@ -11,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from skydelay.features.schedule import build_schedule_features
+from skydelay.features.schedule import build_schedule_features, direction_columns
 from skydelay.pipeline import schema
 from skydelay.pipeline.clean_hrrr import CEILING_UNLIMITED
 
@@ -61,6 +62,7 @@ def build_schedule_weather_features(
     *,
     horizon_hours: int = 2,
     valid_time_tolerance: str | pd.Timedelta = "90min",
+    direction: str = "departure",
 ) -> pd.DataFrame:
     """Return the schedule feature table with point-in-time HRRR features."""
     if horizon_hours < 1:
@@ -80,10 +82,9 @@ def build_schedule_weather_features(
     if missing:
         raise KeyError(f"Weather table is missing required columns: {missing}")
 
-    table = build_schedule_features(flights)
-    table[PREDICTION_CUTOFF] = table[schema.SCHED_DEP_UTC] - pd.Timedelta(
-        hours=horizon_hours
-    )
+    event_time = direction_columns(direction)[0]
+    table = build_schedule_features(flights, direction)
+    table[PREDICTION_CUTOFF] = table[event_time] - pd.Timedelta(hours=horizon_hours)
     table["_flight_id"] = np.arange(len(table), dtype="int64")
 
     forecast = weather.loc[:, sorted(required)].copy()
@@ -105,12 +106,12 @@ def build_schedule_weather_features(
     # HRRR fields are valid on clock hours.  Three candidate hours cover the
     # nearest available valid time even when the configured lead set skips an
     # hour.  The tolerance below rejects candidates that are too far away.
-    target_hour = table[schema.SCHED_DEP_UTC].dt.round("h")
+    target_hour = table[event_time].dt.round("h")
     candidates = pd.concat(
         [
             table.loc[
                 :,
-                ["_flight_id", "hub", schema.SCHED_DEP_UTC, PREDICTION_CUTOFF],
+                ["_flight_id", "hub", event_time, PREDICTION_CUTOFF],
             ].assign(_candidate_valid_utc=target_hour + pd.Timedelta(hours=offset))
             for offset in (-1, 0, 1)
         ],
@@ -123,9 +124,7 @@ def build_schedule_weather_features(
         right_on=[schema.HUB, schema.VALID_TIME_UTC],
         validate="many_to_many",
     )
-    joined["_valid_gap"] = (
-        joined[schema.VALID_TIME_UTC] - joined[schema.SCHED_DEP_UTC]
-    ).abs()
+    joined["_valid_gap"] = (joined[schema.VALID_TIME_UTC] - joined[event_time]).abs()
     eligible = joined.loc[
         (joined[schema.AVAILABLE_AT_UTC] <= joined[PREDICTION_CUTOFF])
         & (joined["_valid_gap"] <= tolerance)

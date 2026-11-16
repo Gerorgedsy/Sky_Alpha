@@ -1,8 +1,9 @@
-/* Delay / on-time predictions for JFK, LGA and EWR.
+/* Delay / on-time predictions for departures from and arrivals at JFK, LGA and EWR.
  *
  * Reads the static file data/predictions.json, which the team regenerates with
  * `python -m skydelay.models.publish_predictions` and pushes to GitHub Pages.
- * Add ?sample=1 to the page URL to preview the layout with illustrative data.
+ * URL options: ?sample=1 previews the layout with illustrative data,
+ * ?airport=LGA opens an airport, ?view=arrivals opens the arrivals board.
  */
 (() => {
   'use strict';
@@ -12,6 +13,10 @@
   const REFRESH_MS = 5 * 60 * 1000;
   const AIRPORTS = ['JFK', 'LGA', 'EWR'];
   const SHORT = {JFK: 'Kennedy', LGA: 'LaGuardia', EWR: 'Newark'};
+  const WORDS = {
+    departure: {plural: 'Departures', lower: 'departures', time: 'Departs (ET)', other: 'To', verb: 'leaving', still: 'Still to depart', done: 'Including departed', toggle: 'Show departed'},
+    arrival: {plural: 'Arrivals', lower: 'arrivals', time: 'Arrives (ET)', other: 'From', verb: 'landing', still: 'Still to land', done: 'Including landed', toggle: 'Show landed'},
+  };
 
   const $ = (selector) => document.querySelector(selector);
   const node = (tag, className, text) => {
@@ -32,29 +37,39 @@
   };
   const flightLabel = (f) => (f.carrier && f.flight.startsWith(f.carrier) ? `${f.carrier} ${f.flight.slice(f.carrier.length)}` : f.flight);
   const band = (confidence) => (confidence >= 0.8 ? 'High' : confidence >= 0.65 ? 'Medium' : 'Low');
+  const route = (f) => (f.direction === 'arrival' ? `${f.origin || '—'} → ${f.airport}` : `${f.airport} → ${f.dest || '—'}`);
 
-  const state = {data: null, airport: 'JFK', filter: 'all', sort: 'time', query: '', showPast: false};
+  const state = {
+    data: null,
+    direction: params.get('view') === 'arrivals' ? 'arrival' : 'departure',
+    airport: 'JFK', filter: 'all', sort: 'time', query: '', showPast: false,
+  };
 
-  function rebaseSample(data) {
+  function rebaseSample(data, flights) {
     // Sample times are shifted so the preview always looks current.
     const shift = Date.now() - 12 * 60000 - Date.parse(data.generated_at);
-    const move = (iso) => new Date(Date.parse(iso) + shift).toISOString();
-    return {...data, generated_at: move(data.generated_at), flights: data.flights.map((f) => ({...f, scheduled_dep_utc: move(f.scheduled_dep_utc)}))};
+    flights.forEach((f) => { f.scheduled += shift; });
+    return new Date(Date.parse(data.generated_at) + shift).toISOString();
   }
 
-  function normalise(raw) {
-    const data = SAMPLE ? rebaseSample(raw) : raw;
-    const flights = (Array.isArray(data.flights) ? data.flights : [])
-      .filter((f) => AIRPORTS.includes(f.airport) && Number.isFinite(Date.parse(f.scheduled_dep_utc)) && Number.isFinite(f.confidence))
-      .map((f) => ({...f, departs: Date.parse(f.scheduled_dep_utc)}));
-    return {...data, flights, generatedMs: Date.parse(data.generated_at)};
+  function normalise(data) {
+    // Schema 1 held departures only, with scheduled_dep_utc and one model.
+    const models = data.models || {departure: data.model || null, arrival: null};
+    const flights = (Array.isArray(data.flights) ? data.flights : []).map((f) => {
+      const direction = f.direction === 'arrival' ? 'arrival' : 'departure';
+      return {
+        ...f, direction,
+        origin: f.origin || (direction === 'departure' ? f.airport : undefined),
+        scheduled: Date.parse(f.scheduled_utc || f.scheduled_dep_utc),
+      };
+    }).filter((f) => AIRPORTS.includes(f.airport) && Number.isFinite(f.scheduled) && Number.isFinite(f.confidence));
+    const generatedAt = SAMPLE ? rebaseSample(data, flights) : data.generated_at;
+    return {...data, models, flights, generatedMs: Date.parse(generatedAt)};
   }
 
-  function isPast(flight) { return flight.departs < Date.now(); }
-
-  function visible(airport) {
-    return state.data.flights.filter((f) => f.airport === airport && (state.showPast || !isPast(f)));
-  }
+  const isPast = (flight) => flight.scheduled < Date.now();
+  const model = () => state.data.models[state.direction];
+  const visible = (airport) => state.data.flights.filter((f) => f.direction === state.direction && f.airport === airport && (state.showPast || !isPast(f)));
 
   function renderMeta() {
     const data = state.data;
@@ -62,32 +77,32 @@
     const banner = $('#predBanner');
     meta.replaceChildren();
     banner.hidden = true;
-    banner.className = 'pred-banner';
     if (!Number.isFinite(data.generatedMs)) {
       meta.append(node('span', 'pred-pill pred-pill-wait', 'Awaiting first publish'));
       return;
     }
-    const staleAfter = (data.stale_after_minutes || 180) * 60000;
-    const stale = Date.now() - data.generatedMs > staleAfter;
+    const stale = Date.now() - data.generatedMs > (data.stale_after_minutes || 180) * 60000;
+    const pill = SAMPLE ? ['pred-pill-wait', 'Sample'] : stale ? ['pred-pill-stale', 'Out of date'] : ['pred-pill-live', 'Current'];
     meta.append(
-      node('span', `pred-pill ${stale ? 'pred-pill-stale' : 'pred-pill-live'}`, stale ? 'Out of date' : 'Current'),
+      node('span', `pred-pill ${pill[0]}`, pill[1]),
       node('span', null, `Updated ${ago(data.generatedMs)}`),
-      node('small', null, `${day.format(data.generatedMs)}, ${clock.format(data.generatedMs)} ET · model ${data.model?.name || 'unnamed'}`),
+      node('small', null, `${day.format(data.generatedMs)}, ${clock.format(data.generatedMs)} ET · model ${model()?.name || 'not published'}`),
     );
-    if (SAMPLE) {
+    if (stale && !SAMPLE) {
       banner.hidden = false;
-      banner.classList.add('pred-banner-sample');
-      banner.replaceChildren(node('strong', null, 'Sample data — layout preview only. '),
-        document.createTextNode('These flights and percentages are illustrative, not SkyDelay predictions. '));
-      const link = node('a', null, 'View published predictions');
-      link.href = location.pathname + '#forecast';
-      banner.append(link);
-    } else if (stale) {
-      banner.hidden = false;
-      banner.classList.add('pred-banner-stale');
       banner.replaceChildren(node('strong', null, 'These predictions are out of date. '),
         document.createTextNode(`They were published ${ago(data.generatedMs)} and may not reflect current conditions. Check the airport conditions below and the official flight boards.`));
     }
+  }
+
+  function renderDirection() {
+    document.querySelectorAll('[data-pred-direction]').forEach((button) => {
+      const direction = button.dataset.predDirection;
+      button.setAttribute('aria-pressed', String(direction === state.direction));
+      const count = state.data ? state.data.flights.filter((f) => f.direction === direction && (state.showPast || !isPast(f))).length : 0;
+      button.querySelector('small').textContent = state.data?.models[direction] ? `${count} flights` : 'Not published';
+    });
+    $('#predPastLabel').textContent = WORDS[state.direction].toggle;
   }
 
   function renderTabs() {
@@ -99,9 +114,8 @@
       const button = node('button', 'pred-airport');
       button.type = 'button';
       button.setAttribute('aria-pressed', String(code === state.airport));
-      button.append(node('strong', null, code), node('span', null, SHORT[code]));
-      const risk = node('small', delayed ? 'has-delays' : null, flights.length ? `${delayed} of ${flights.length} predicted delayed` : 'No upcoming predictions');
-      button.append(risk);
+      button.append(node('strong', null, code), node('span', null, SHORT[code]),
+        node('small', delayed ? 'has-delays' : null, flights.length ? `${delayed} of ${flights.length} predicted delayed` : `No upcoming ${WORDS[state.direction].lower}`));
       button.addEventListener('click', () => { state.airport = code; render(); });
       tabs.append(button);
     });
@@ -114,15 +128,16 @@
   }
 
   function renderSummary(flights) {
+    const words = WORDS[state.direction];
     const summary = $('#predSummary');
     summary.replaceChildren();
-    const delayed = flights.filter((f) => f.prediction === 'delayed');
-    const onTime = flights.length - delayed.length;
+    const delayed = flights.filter((f) => f.prediction === 'delayed').length;
+    const onTime = flights.length - delayed;
     const mean = flights.length ? flights.reduce((s, f) => s + f.confidence, 0) / flights.length : null;
     summary.append(
-      tile('Departures predicted', String(flights.length), state.showPast ? 'Including departed' : 'Still to depart'),
-      tile('Predicted delayed', String(delayed.length), flights.length ? `${pct(delayed.length / flights.length)} of departures · 30+ min` : '—', 'delayed'),
-      tile('Predicted on time', String(onTime), flights.length ? `${pct(onTime / flights.length)} of departures` : '—', 'ontime'),
+      tile(`${words.plural} predicted`, String(flights.length), state.showPast ? words.done : words.still),
+      tile('Predicted delayed', String(delayed), flights.length ? `${pct(delayed / flights.length)} of ${words.lower} · 30+ min` : '—', 'delayed'),
+      tile('Predicted on time', String(onTime), flights.length ? `${pct(onTime / flights.length)} of ${words.lower}` : '—', 'ontime'),
       tile('Average confidence', mean == null ? '—' : pct(mean), mean == null ? 'No flights' : `${band(mean)} on average`),
     );
   }
@@ -140,39 +155,47 @@
     return cell;
   }
 
+  function emptyState(title, text, large) {
+    const empty = node('div', `pred-empty${large ? ' pred-empty-large' : ''}`);
+    empty.append(node('strong', null, title), node('p', null, text));
+    return empty;
+  }
+
   function renderTable(all) {
+    const words = WORDS[state.direction];
     const table = $('#predTable');
     table.replaceChildren();
     const query = state.query.trim().toUpperCase();
     let flights = all.filter((f) => state.filter === 'all' || f.prediction === state.filter)
-      .filter((f) => !query || `${f.flight} ${flightLabel(f)} ${f.dest}`.toUpperCase().includes(query));
+      .filter((f) => !query || `${f.flight} ${flightLabel(f)} ${f.origin} ${f.dest}`.toUpperCase().includes(query));
     flights = flights.slice().sort(state.sort === 'confidence'
-      ? (a, b) => b.confidence - a.confidence || a.departs - b.departs
+      ? (a, b) => b.confidence - a.confidence || a.scheduled - b.scheduled
       : state.sort === 'risk'
-        ? (a, b) => (b.delay_probability ?? 0) - (a.delay_probability ?? 0) || a.departs - b.departs
-        : (a, b) => a.departs - b.departs || a.flight.localeCompare(b.flight));
+        ? (a, b) => (b.delay_probability ?? 0) - (a.delay_probability ?? 0) || a.scheduled - b.scheduled
+        : (a, b) => a.scheduled - b.scheduled || a.flight.localeCompare(b.flight));
 
     if (!flights.length) {
-      const empty = node('div', 'pred-empty');
-      empty.append(node('strong', null, all.length ? 'No flights match these filters' : 'No upcoming departures with a prediction'),
-        node('p', null, all.length ? 'Clear the search or choose “All”.' : `The latest published file has no ${state.airport} departures still to leave.`));
-      table.append(empty);
+      table.append(all.length
+        ? emptyState('No flights match these filters', 'Clear the search or choose “All”.')
+        : emptyState(`No upcoming ${words.lower} with a prediction`, `The latest published file has no ${state.airport} ${words.lower} still to come.`));
       return;
     }
     const head = node('div', 'pred-row pred-colhead');
-    ['Departs (ET)', 'Flight', 'To', 'Prediction', 'Model confidence'].forEach((label) => head.append(node('span', null, label)));
+    [words.time, 'Flight', words.other, 'Prediction', 'Model confidence'].forEach((label) => head.append(node('span', null, label)));
     head.setAttribute('aria-hidden', 'true');
     table.append(head);
     const list = node('ul', 'pred-list');
-    list.setAttribute('aria-label', `${state.airport} departure predictions`);
+    list.setAttribute('aria-label', `${state.airport} ${words.lower} predictions`);
     flights.forEach((f) => {
-      const row = node('li', `pred-row${isPast(f) ? ' is-past' : ''}`);
+      const past = isPast(f);
+      const row = node('li', `pred-row${past ? ' is-past' : ''}`);
       const when = node('span', 'pred-time');
-      when.append(node('strong', null, clock.format(f.departs)), node('small', null, isPast(f) ? 'Scheduled time passed' : day.format(f.departs)));
-      const status = node('span', `pred-status ${f.prediction === 'delayed' ? 'is-delayed' : 'is-ontime'}`, f.prediction === 'delayed' ? 'Delayed 30+ min' : 'On time');
-      row.append(when, node('strong', 'pred-flight', flightLabel(f)), node('span', 'pred-dest', `${state.airport} → ${f.dest}`), status, confidenceCell(f));
-      row.title = `Probability of a 30+ minute delay: ${pct(f.delay_probability ?? (f.prediction === 'delayed' ? f.confidence : 1 - f.confidence))}`;
-      row.setAttribute('aria-label', `${flightLabel(f)} to ${f.dest}, departs ${clock.format(f.departs)} Eastern: predicted ${f.prediction === 'delayed' ? 'delayed 30 minutes or more' : 'on time'}, ${pct(f.confidence)} confidence`);
+      when.append(node('strong', null, clock.format(f.scheduled)), node('small', null, past ? 'Scheduled time passed' : day.format(f.scheduled)));
+      const delayed = f.prediction === 'delayed';
+      row.append(when, node('strong', 'pred-flight', flightLabel(f)), node('span', 'pred-dest', route(f)),
+        node('span', `pred-status ${delayed ? 'is-delayed' : 'is-ontime'}`, delayed ? 'Delayed 30+ min' : 'On time'), confidenceCell(f));
+      row.title = `Probability of a 30+ minute delay: ${pct(f.delay_probability ?? (delayed ? f.confidence : 1 - f.confidence))}`;
+      row.setAttribute('aria-label', `${flightLabel(f)} ${route(f).replace('→', 'to')}, ${state.direction === 'arrival' ? 'arrives' : 'departs'} ${clock.format(f.scheduled)} Eastern: predicted ${delayed ? 'delayed 30 minutes or more' : 'on time'}, ${pct(f.confidence)} confidence`);
       list.append(row);
     });
     table.append(list);
@@ -180,19 +203,20 @@
   }
 
   function renderMethod() {
-    const model = state.data.model || {};
+    const current = model() || {};
+    const verb = WORDS[state.direction].verb;
     const method = $('#predMethod');
     method.replaceChildren();
-    const threshold = Number.isFinite(model.threshold) ? pct(model.threshold) : '50%';
-    method.append(node('p', null, `A flight is called delayed when the model’s probability of leaving 30 or more minutes late reaches ${threshold}. Confidence is the model’s probability for the call it made, so it ranges from 50% (a toss-up) to 100%. Predictions are made about ${model.horizon_hours || 2} hours before scheduled departure.`));
-    const v = model.validation || {};
+    const threshold = Number.isFinite(current.threshold) ? pct(current.threshold) : '50%';
+    method.append(node('p', null, `A flight is called delayed when the model’s probability of ${verb} 30 or more minutes late reaches ${threshold}. Confidence is the model’s probability for the call it made, so it ranges from 50% (a toss-up) to 100%. Predictions are made about ${current.horizon_hours || 2} hours before the scheduled time.`));
+    const v = current.validation || {};
     if (Number.isFinite(v.accuracy)) {
       const parts = [`accuracy ${pct(v.accuracy)}`];
       if (Number.isFinite(v.recall)) parts.push(`recall on delays ${pct(v.recall)}`);
       if (Number.isFinite(v.precision)) parts.push(`precision ${pct(v.precision)}`);
       if (Number.isFinite(v.brier_score)) parts.push(`Brier score ${v.brier_score.toFixed(3)}`);
       const scope = v.test_rows ? ` on ${Number(v.test_rows).toLocaleString()} held-out flights` : '';
-      method.append(node('p', 'pred-validation', `Validation${scope}: ${parts.join(' · ')}.`));
+      method.append(node('p', 'pred-validation', `${WORDS[state.direction].plural} model validation${scope}: ${parts.join(' · ')}.`));
     }
   }
 
@@ -201,9 +225,7 @@
     $('#predBanner').hidden = true;
     ['#predAirports', '#predSummary'].forEach((s) => $(s).replaceChildren());
     $('#predControls').hidden = true;
-    const empty = node('div', 'pred-empty pred-empty-large');
-    empty.append(node('strong', null, 'No predictions have been published yet'),
-      node('p', null, 'Delay or on-time calls with model confidence will appear here for JFK, LGA and EWR once the team publishes a scored departure schedule.'));
+    const empty = emptyState('No predictions have been published yet', 'Delay or on-time calls with model confidence will appear here for departures and arrivals at JFK, LGA and EWR once the team publishes a scored schedule.', true);
     const link = node('a', 'forecast-link', 'Preview the layout with sample data →');
     link.href = '?sample=1#forecast';
     empty.append(link);
@@ -213,9 +235,17 @@
 
   function render() {
     if (!state.data) return;
+    renderDirection();
     if (state.data.status === 'awaiting_model' || !Number.isFinite(state.data.generatedMs)) { renderAwaiting(); return; }
-    $('#predControls').hidden = false;
     renderMeta();
+    if (!model()) {
+      $('#predControls').hidden = true;
+      ['#predAirports', '#predSummary'].forEach((s) => $(s).replaceChildren());
+      $('#predTable').replaceChildren(emptyState(`${WORDS[state.direction].plural} predictions are not published yet`, `The latest file includes ${state.direction === 'arrival' ? 'departure' : 'arrival'} predictions only.`, true));
+      renderMethod();
+      return;
+    }
+    $('#predControls').hidden = false;
     renderTabs();
     const flights = visible(state.airport);
     renderSummary(flights);
@@ -232,9 +262,7 @@
     } catch {
       if (state.data) { renderMeta(); return; }
       $('#predMeta').replaceChildren(node('span', 'pred-pill pred-pill-stale', 'Unavailable'));
-      const empty = node('div', 'pred-empty pred-empty-large');
-      empty.append(node('strong', null, 'Predictions could not be loaded'), node('p', null, 'Reload the page in a moment. The airport conditions below are loaded separately.'));
-      $('#predTable').replaceChildren(empty);
+      $('#predTable').replaceChildren(emptyState('Predictions could not be loaded', 'Reload the page in a moment. The airport conditions below are loaded separately.', true));
     }
   }
 
@@ -245,6 +273,10 @@
     document.querySelectorAll('[data-pred-filter]').forEach((button) => button.addEventListener('click', () => {
       state.filter = button.dataset.predFilter;
       document.querySelectorAll('[data-pred-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+      render();
+    }));
+    document.querySelectorAll('[data-pred-direction]').forEach((button) => button.addEventListener('click', () => {
+      state.direction = button.dataset.predDirection;
       render();
     }));
   }
