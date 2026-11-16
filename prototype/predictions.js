@@ -259,6 +259,8 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       state.data = normalise(await response.json());
       render();
+      // Lets the schedule board show a flight's prediction. Sample data is never shared.
+      window.dispatchEvent(new CustomEvent('skydelay:predictions', {detail: SAMPLE ? [] : state.data.flights}));
     } catch {
       if (state.data) { renderMeta(); return; }
       $('#predMeta').replaceChildren(node('span', 'pred-pill pred-pill-stale', 'Unavailable'));

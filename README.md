@@ -193,6 +193,25 @@ precision, F1, accuracy, weather coverage and improvement over Baseline 1.
 
 The [public prototype](https://gerorgedsy.github.io/Sky_Alpha/prototype/) is a New York forecast workspace. Its **Delay predictions** board calls each upcoming departure from and arrival at JFK, LGA and EWR *delayed* (30+ minutes late) or *on time*, with the model's confidence in that call; a Departures / Arrivals switch flips between the two. The board reads `prototype/data/predictions.json`, which the team regenerates and pushes (see [Publishing predictions](#publishing-predictions)); until the first publish it says so rather than showing numbers. Add `?sample=1` to the URL to preview the layout with clearly labelled illustrative data. The live airport section combines FAA NAS advisories, NOAA aviation weather, and adsb.lol aircraft observations through a shared-cache backend, and the [historical forecast replay](prototype/replay.html) keeps the November 2023 backtest. See [`prototype/README.md`](prototype/README.md) and [`live-service/README.md`](live-service/README.md) for limits and deployment details.
 
+### Live airport data
+
+The page's **Airport conditions** and **Flight schedules and gates** sections
+try the live backend first and otherwise read snapshots from the `live-data`
+branch. The [Live airport data](.github/workflows/live-data.yml) workflow
+writes them twice an hour with `python -m skydelay.live.snapshot`:
+
+- `operations.json`: FAA NAS airport events and NOAA METAR weather for JFK,
+  EWR and LGA (no key needed);
+- `schedules.json`: departures and arrivals per airport from AirLabs, with
+  terminal, gate, baggage and status. Add a free key from
+  [airlabs.co](https://airlabs.co/signup) as the repository secret
+  `AIRLABS_API_KEY` (Settings → Secrets and variables → Actions). Schedules are
+  refreshed at most every six hours, about 720 of the free plan's 1,000 monthly
+  requests; run the workflow by hand with *force schedules* to refresh now.
+
+The flight board shows SkyDelay's prediction next to any flight that appears in
+`predictions.json`.
+
 ### Publishing predictions
 
 1. Train a departure and an arrival baseline (above). Arrival models are

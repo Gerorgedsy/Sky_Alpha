@@ -10,6 +10,7 @@ The [`replay.html`](replay.html) page preserves the 7,399-flight November 18–2
 
 - `index.html`, `live.js`, `operations.js`, `live.css`: forecast workspace and live operational views.
 - `predictions.js`, `predictions.css`, `data/`: delay / on-time prediction board and its published data.
+- `operations.js`: airport conditions and the departures / arrivals flight board. Each falls back to the `live-data` branch snapshots (see the root README) when the backend is unreachable; `?liveData=<url>` points it elsewhere for testing.
 - `replay.html`, `app.js`: historical forecast replay and interaction.
 - `styles.css`, `favicon.svg`: shared presentation.
 - `template.html`: replay markup with an embedded-data placeholder.
