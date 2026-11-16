@@ -10,8 +10,8 @@ sources and writes JSON the page can read when the backend is unreachable.
   ``status: not_configured``.
 
 AirLabs' free plan allows about 1,000 requests a month and 50 flights per
-request. One refresh costs six requests, so schedules are re-fetched only when
-the saved file is older than ``--schedule-max-age-hours`` (default 6).
+request, so departures are re-fetched every three hours and arrivals every
+twelve (see ``MAX_AGE_HOURS``).
 
 Example:
 
@@ -117,6 +117,18 @@ def _clean(row: dict[str, Any], key: str) -> str | None:
     return str(row.get(key) or "").strip() or None
 
 
+def _ceiling(clouds: Any) -> float | None:
+    """Lowest broken, overcast or obscured layer, in feet; None if clear."""
+    bases = [
+        layer.get("base")
+        for layer in clouds or []
+        if isinstance(layer, dict)
+        and layer.get("cover") in {"BKN", "OVC", "OVX", "VV"}
+        and isinstance(layer.get("base"), int | float)
+    ]
+    return float(min(bases)) if bases else None
+
+
 def normalize_weather(rows: Any) -> dict[str, Any]:
     """Return the latest METAR summary per New York airport."""
     if not isinstance(rows, list):
@@ -138,6 +150,9 @@ def normalize_weather(rows: Any) -> dict[str, Any]:
             "gustKt": _number(row, "wgst"),
             "visibilityMi": None if row.get("visib") is None else str(row["visib"]),
             "temperatureC": _number(row, "temp"),
+            "dewpointC": _number(row, "dewp"),
+            "ceilingFt": _ceiling(row.get("clouds")),
+            "wx": row.get("wxString") or None,
         }
     return {"status": "available", "airports": weather}
 
@@ -200,12 +215,21 @@ def clean_schedule(raw: Any, airport: str, direction: str) -> list[dict[str, Any
     return flights
 
 
-def fetch_schedules(api_key: str) -> dict[str, Any]:
-    """Fetch departures and arrivals for every New York airport."""
-    airports: dict[str, dict[str, Any]] = {}
+def fetch_schedules(
+    api_key: str,
+    directions: tuple[str, ...] = tuple(DIRECTIONS),
+    previous: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Fetch the given directions for every airport, keeping the others."""
+    previous = previous if previous and previous.get("status") == "live" else {}
+    airports: dict[str, dict[str, Any]] = {
+        a: dict((previous.get("airports") or {}).get(a) or {}) for a in AIRPORTS
+    }
+    fetched = dict(previous.get("directionsFetchedAt") or {})
+    now = _now()
     for airport in AIRPORTS:
-        airports[airport] = {}
-        for direction, side in DIRECTIONS.items():
+        for direction in directions:
+            side = DIRECTIONS[direction]
             query = urllib.parse.urlencode(
                 {f"{side}_iata": airport, "limit": SCHEDULE_LIMIT, "api_key": api_key}
             )
@@ -214,10 +238,13 @@ def fetch_schedules(api_key: str) -> dict[str, Any]:
                 message = raw["error"].get("message", "unknown error")
                 raise RuntimeError(f"AirLabs error for {airport}: {message}")
             airports[airport][direction] = clean_schedule(raw, airport, direction)
+    for direction in directions:
+        fetched[direction] = now
     return {
         "status": "live",
         "source": "AirLabs",
-        "fetchedAt": _now(),
+        "fetchedAt": now,
+        "directionsFetchedAt": fetched,
         "coverage": (
             "Partial: the free plan returns at most 50 flights per airport and "
             "direction; gate, terminal and status may be missing."
@@ -226,12 +253,28 @@ def fetch_schedules(api_key: str) -> dict[str, Any]:
     }
 
 
-def _age(path: Path) -> timedelta | None:
+# AirLabs' free plan allows about 1,000 requests a month. Departures feed the
+# delay model's "how late are flights running" input, so they refresh every
+# three hours (3 airports x 8 = 24 requests a day); arrivals, shown only on
+# the flight board, twice a day (6 a day). About 900 requests a month.
+MAX_AGE_HOURS = {"departures": 3, "arrivals": 12}
+
+
+def _read(path: Path) -> dict[str, Any]:
     try:
-        fetched = json.loads(path.read_text()).get("fetchedAt")
-        return datetime.now(UTC) - datetime.fromisoformat(fetched)
-    except (OSError, ValueError, TypeError, AttributeError):
-        return None
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def _direction_age(snapshot: dict[str, Any], direction: str) -> timedelta:
+    stamp = (snapshot.get("directionsFetchedAt") or {}).get(direction) or snapshot.get(
+        "fetchedAt"
+    )
+    try:
+        return datetime.now(UTC) - datetime.fromisoformat(stamp)
+    except (TypeError, ValueError):
+        return timedelta.max
 
 
 def _write(path: Path, payload: dict[str, Any]) -> None:
@@ -242,7 +285,6 @@ def _write(path: Path, payload: dict[str, Any]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--schedule-max-age-hours", type=float, default=6.0)
     parser.add_argument("--force-schedules", action="store_true")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
@@ -256,24 +298,27 @@ def main() -> None:
 
     schedules = args.output / "schedules.json"
     api_key = os.environ.get("AIRLABS_API_KEY", "").strip()
-    age = _age(schedules)
+    previous = _read(schedules)
     if not api_key:
         _write(
             schedules,
             {"status": "not_configured", "source": "AirLabs", "fetchedAt": None},
         )
-    elif (
-        args.force_schedules
-        or age is None
-        or age >= timedelta(hours=args.schedule_max_age_hours)
-    ):
-        try:
-            _write(schedules, fetch_schedules(api_key))
-        except Exception as error:  # noqa: BLE001 - keep the previous snapshot
-            print(f"Schedules not updated: {error}")
-            failures += 1
     else:
-        print(f"Schedules are {age} old; keeping them to save AirLabs quota")
+        due = [
+            direction
+            for direction, hours in MAX_AGE_HOURS.items()
+            if args.force_schedules
+            or _direction_age(previous, direction) >= timedelta(hours=hours)
+        ]
+        if due:
+            try:
+                _write(schedules, fetch_schedules(api_key, tuple(due), previous))
+            except Exception as error:  # noqa: BLE001 - keep the previous snapshot
+                print(f"Schedules not updated: {error}")
+                failures += 1
+        else:
+            print("Schedules are recent; keeping them to save AirLabs quota")
     if failures == 2:
         raise SystemExit("No source could be refreshed")
 

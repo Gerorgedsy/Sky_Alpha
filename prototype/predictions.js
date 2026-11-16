@@ -238,9 +238,21 @@
     const threshold = Number.isFinite(current.threshold) ? pct(current.threshold) : '50%';
     const timing = Number.isFinite(current.horizon_hours)
       ? `Predictions are made about ${current.horizon_hours} hours before the scheduled time.`
-      : 'Predictions cover the whole day and use the schedule alone (airline, route, local time, airport traffic and holidays), not live weather or delays.';
+      : (current.live_inputs?.length
+        ? 'Predictions cover today and tomorrow and are refreshed every 30 minutes from the schedule, the latest weather at the airport and how late its departures are running; the live inputs matter most for flights in the next few hours.'
+        : 'Predictions cover the whole day and use the schedule alone (airline, route, local time, airport traffic and holidays), not live weather or delays.');
     method.append(node('p', null, `A flight is called delayed when the model’s probability of ${verb} 30 or more minutes late reaches ${threshold}. Confidence is the model’s probability for the call it made, from 50% (a toss-up) to 100%. Expected delay is the model’s median for flights like this one that went the way of the call, with the range 80% of them fell in. ${timing}`));
     if (state.data.schedule?.note) method.append(node('p', null, state.data.schedule.note));
+    const inputs = state.data.inputs || {};
+    const parts = [];
+    if (inputs.weather_observed_at) parts.push(`weather observed ${clock.format(Date.parse(inputs.weather_observed_at))} ET`);
+    if (inputs.airport_delays_at) {
+      const delays = Object.entries(inputs.airport_delays || {})
+        .filter(([, d]) => Number.isFinite(d.mean_delay_min))
+        .map(([code, d]) => `${code} ${d.mean_delay_min >= 0 ? '+' : ''}${Math.round(d.mean_delay_min)} min`);
+      parts.push(`recent departures sampled ${clock.format(Date.parse(inputs.airport_delays_at))} ET${delays.length ? ` (${delays.join(', ')})` : ''}`);
+    }
+    if (parts.length) method.append(node('p', null, `Live inputs: ${parts.join(' · ')}.`));
     const v = current.validation || {};
     if (Number.isFinite(v.accuracy)) {
       const parts = [`accuracy ${pct(v.accuracy)}`];

@@ -119,3 +119,51 @@ def test_recent_schedules_are_not_refetched(tmp_path, monkeypatch):
     monkeypatch.setattr("sys.argv", ["snapshot", "--output", str(tmp_path)])
     snapshot.main()
     assert json.loads(path.read_text())["fetchedAt"] == fetched
+
+
+def test_departures_refresh_more_often_than_arrivals(tmp_path, monkeypatch):
+    now = datetime.now(UTC)
+    path = tmp_path / "schedules.json"
+    path.write_text(
+        json.dumps(
+            {
+                "status": "live",
+                "fetchedAt": (now - timedelta(hours=2)).isoformat(),
+                "directionsFetchedAt": {
+                    "departures": (now - timedelta(hours=4)).isoformat(),
+                    "arrivals": (now - timedelta(hours=2)).isoformat(),
+                },
+                "airports": {"JFK": {"arrivals": [{"flight": "KEEP1"}]}},
+            }
+        )
+    )
+    asked = []
+
+    def fake(api_key, directions, previous):
+        asked.append(directions)
+        fetched = {**previous["directionsFetchedAt"], "departures": "now"}
+        return {**previous, "directionsFetchedAt": fetched}
+
+    monkeypatch.setenv("AIRLABS_API_KEY", "key")
+    monkeypatch.setattr(snapshot, "fetch_operations", lambda: {"status": "live"})
+    monkeypatch.setattr(snapshot, "fetch_schedules", fake)
+    monkeypatch.setattr("sys.argv", ["snapshot", "--output", str(tmp_path)])
+    snapshot.main()
+    assert asked == [("departures",)]
+    kept = json.loads(path.read_text())["airports"]["JFK"]["arrivals"]
+    assert kept == [{"flight": "KEEP1"}]
+
+
+def test_weather_keeps_ceiling_dewpoint_and_codes():
+    rows = [
+        {
+            "icaoId": "KEWR",
+            "obsTime": 1763319600,
+            "temp": 20,
+            "dewp": 18,
+            "wxString": "-TSRA",
+            "clouds": [{"cover": "SCT", "base": 900}, {"cover": "BKN", "base": 2500}],
+        },
+    ]
+    ewr = snapshot.normalize_weather(rows)["airports"]["EWR"]
+    assert ewr["ceilingFt"] == 2500 and ewr["dewpointC"] == 18 and ewr["wx"] == "-TSRA"

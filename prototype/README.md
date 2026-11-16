@@ -54,8 +54,8 @@ unreachable they read `operations.json` and `schedules.json` from the
 `live-data` branch, which the **Live airport data** workflow
 (`../.github/workflows/live-data.yml`) refreshes twice an hour with
 `python -m skydelay.live.snapshot`. FAA and NOAA need no key; schedules need the
-`AIRLABS_API_KEY` repository secret and refresh at most every six hours to stay
-inside the free quota. Keys live only in GitHub secrets or backend runtime
+`AIRLABS_API_KEY` repository secret; departures refresh every three hours and
+arrivals every twelve to stay inside the free quota. Keys live only in GitHub secrets or backend runtime
 secrets, never in the page source.
 
 ## Files
