@@ -28,12 +28,6 @@
     goToBoard({airport: button.dataset.tryAirport, direction: button.dataset.tryDirection, query: ''});
   }));
 
-  const ago = (iso) => {
-    const minutes = Math.round((Date.now() - Date.parse(iso)) / 60000);
-    if (!Number.isFinite(minutes)) return null;
-    return minutes < 1 ? 'just now' : minutes < 120 ? `${minutes} min ago` : `${Math.floor(minutes / 60)} h ago`;
-  };
-
   function airportRow(code, data) {
     const events = data?.faa?.events?.[code];
     const weather = data?.weather?.airports?.[code];
@@ -67,7 +61,5 @@
     const alerts = Object.values(data.faa?.events || {}).reduce((n, list) => n + (list?.length || 0), 0);
     live.textContent = alerts ? `${alerts} FAA alert${alerts > 1 ? 's' : ''}` : 'All clear';
     live.className = `hero-chip ${alerts ? 'is-alert' : 'is-ok'}`;
-    const updated = ago(data.fetchedAt);
-    $('#heroUpdated').textContent = updated ? `Updated ${updated}` : 'FAA NAS · NOAA METAR';
   });
 })();
