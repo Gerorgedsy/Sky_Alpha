@@ -39,7 +39,7 @@ jobs:
       # same versions load the models in the prediction job.
       - name: Install dependencies
         run: |
-          pip install $(grep -E '^(numpy|pandas|pyarrow|scikit-learn|joblib|requests)==' requirements.txt)
+          pip install $(grep -E '^(numpy|pandas|pyarrow|scikit-learn|joblib|requests|python-dotenv)==' requirements.txt)
 
       - name: Download and clean BTS data
         env:
