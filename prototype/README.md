@@ -1,12 +1,14 @@
 # SkyDelay prototype
 
-The default [`index.html`](index.html) is a **live aircraft position view** for the New York region. It uses a public, read-only backend at `https://skyalpha-live-airspace.headybuttercup5.chatgpt.site/api/aircraft` to show observations from [adsb.lol](https://www.adsb.lol/docs/open-data/api) under ODbL 1.0. The page checks for a newer shared snapshot every 30 seconds; the backend refreshes the source about every 3½ minutes without an API key. It shows observation age, stale or unavailable states, and incomplete coverage explicitly. It does **not** show live airline schedules, gate status, routes, or delay predictions.
+The default [`index.html`](index.html) is a **forecast workspace** for the New York region. Its forecast area clearly shows that no current flight-level prediction or model confidence is available until a schedule feed and trained model are connected. It uses a public, read-only backend to show live FAA airport advisories, NOAA aviation weather observations, and aircraft positions from [adsb.lol](https://www.adsb.lol/docs/open-data/api) under ODbL 1.0. The page checks aircraft positions every 30 seconds; the backend refreshes that source about every 3½ minutes without a key. Weather and FAA data refresh every five minutes. Stale and unavailable states are explicit.
+
+The schedule area links to the official JFK, EWR, and LGA flight boards, where users can verify gates and flight status. An optional backend `AIRLABS_API_KEY` connects the [AirLabs Schedules API](https://airlabs.co/docs/schedules) for a partial in-page departures list. The free plan has limited coverage and may omit gate or status fields; the UI shows missing values rather than inventing them. AirLabs data is operational status, not a SkyDelay model forecast. Store any key only as a backend runtime secret, never in GitHub Pages source.
 
 The [`replay.html`](replay.html) page preserves the 7,399-flight November 18–24, 2023 delay forecast backtest. It supports flight and route search, date selection, sorting, and per-flight details. The median delay was forecast two hours before departure. Confidence is the estimated chance that actual delay falls within ±15 minutes of the median; the 90th percentile is an upper forecast threshold, not a guaranteed worst case. The replay is not current flight status.
 
 ## Source and rebuild
 
-- `index.html`, `live.js`, `live.css`: live view and interaction.
+- `index.html`, `live.js`, `operations.js`, `live.css`: forecast workspace and live operational views.
 - `replay.html`, `app.js`: historical forecast replay and interaction.
 - `styles.css`, `favicon.svg`: shared presentation.
 - `template.html`: replay markup with an embedded-data placeholder.
