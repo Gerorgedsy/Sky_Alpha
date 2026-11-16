@@ -189,6 +189,10 @@ to `artifacts/models/` and a comparison scorecard to `artifacts/metrics/`.
 The scorecard includes Brier score, calibration error, PR-AUC, recall,
 precision, F1, accuracy, weather coverage and improvement over Baseline 1.
 
+## Live SkyDelay prototype
+
+The [public prototype](https://gerorgedsy.github.io/Sky_Alpha/prototype/) now opens a live New York airspace view. It shows observed aircraft positions, callsigns, altitude, speed, heading, and observation age from adsb.lol through a separately hosted, shared-cache backend. The [historical forecast replay](prototype/replay.html) remains available for the November 2023 backtest. Live positions are **not** live delay predictions or airline flight status. See [`prototype/README.md`](prototype/README.md) and [`live-service/README.md`](live-service/README.md) for limits and deployment details.
+
 ## Pilot demo
 
 Open [`demo/index.html`](demo/index.html) in any browser. Select ATL, ORD or

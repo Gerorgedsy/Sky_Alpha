@@ -1,28 +1,21 @@
-# SkyDelay · Flight Delay Prediction Prototype
+# SkyDelay prototype
 
-A stock-app-style prototype: each row shows a flight, its predicted departure delay, and how much to trust that prediction.
+The default [`index.html`](index.html) is a **live aircraft position view** for the New York region. It uses a public, read-only backend at `https://skyalpha-live-airspace.headybuttercup5.chatgpt.site/api/aircraft` to show observations from [adsb.lol](https://www.adsb.lol/docs/open-data/api) under ODbL 1.0. The page checks for a newer shared snapshot every 30 seconds; the backend refreshes the source about every 3½ minutes without an API key. It shows observation age, stale or unavailable states, and incomplete coverage explicitly. It does **not** show live airline schedules, gate status, routes, or delay predictions.
 
-## Open it
-- **Locally:** double-click `index.html`.
-- **GitHub Pages:** put `index.html` in the repo root → Settings → Pages → Deploy from branch `main` / root. The site will be at `https://<username>.github.io/<repo>/`.
+The [`replay.html`](replay.html) page preserves the 7,399-flight November 18–24, 2023 delay forecast backtest. It supports flight and route search, date selection, sorting, and per-flight details. The median delay was forecast two hours before departure. Confidence is the estimated chance that actual delay falls within ±15 minutes of the median; the 90th percentile is an upper forecast threshold, not a guaranteed worst case. The replay is not current flight status.
 
-The page is a single self-contained file (data is embedded); no server or build step needed.
+## Source and rebuild
 
-## Features
-- **Flight tab:** search a flight number (`DL393`, `B6 1131`, or just `393`). With an empty search, shows the day's highest-risk flights.
-- **Route tab:** pick a NYC origin (EWR / JFK / LGA / all) and type a destination code or city; results are sorted from shortest to longest predicted delay.
-- **Date chips:** Nov 18–24, 2023.
-- **Tap a flight:** 80% delay range, top 3 drivers (in minutes), and the backtest result (actual delay).
+- `index.html`, `live.js`, `live.css`: live view and interaction.
+- `replay.html`, `app.js`: historical forecast replay and interaction.
+- `styles.css`, `favicon.svg`: shared presentation.
+- `template.html`: replay markup with an embedded-data placeholder.
+- `build_site.py`: rebuilds `replay.html` from the template while preserving the embedded dataset.
+- `flight_model.py`: research export script; it expects local input files and can produce a replacement `site_data.json` in its configured environment.
+- `../live-service/`: backend source, shared D1 cache, migration, and tests. This is published separately from GitHub Pages.
 
-## What the numbers mean
-- **Predicted delay:** median predicted departure delay, made 2 hours before scheduled departure.
-- **Confidence:** calibrated probability that the actual delay lands within ±15 min of the prediction.
-- **Worst:** 90th-percentile prediction.
+After changing `template.html`, run `python3 prototype/build_site.py` from the repository root. To replace the replay dataset, run `python3 prototype/build_site.py --data path/to/site_data.json`. Changes to either JavaScript file do not need a build.
 
-## Data & model
-- nycflights23 (all 2023 departures from EWR/JFK/LGA, from BTS On-Time) + hourly airport weather (ASOS).
-- LightGBM quantile models (q10/q50/q90) trained on Jan–Aug; confidence model trained on Sep–Oct; Nov–Dec is held-out test.
-- Features use only information available at prediction time: carrier, destination, schedule, airport delay state & backlog, NYC-wide state, last weather observation.
-- Rebuild: `flight_model.py` → `site_data.json` → inject into `template.html` at `/*__DATA__*/null`.
+## Deployment
 
-This is a replay of historical data for demo purposes, not live predictions.
+GitHub Pages serves `prototype/index.html` at `https://gerorgedsy.github.io/Sky_Alpha/prototype/` from the configured branch. Push the `prototype/` files to update the public frontend. The backend is a separate public Sites Worker with its project ID in `live-service/.openai/hosting.json`; changes to `live-service/` also require a new Sites deployment. No API key is committed. For a faster upstream refresh, obtain an adsb.lol key, store it as a backend runtime secret, and adjust `REFRESH_SECONDS` within the provider's quota.
