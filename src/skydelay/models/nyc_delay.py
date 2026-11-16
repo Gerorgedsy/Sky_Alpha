@@ -418,8 +418,13 @@ def stand_in(
     # The first and last days of the record are cut off by the UTC window
     # (a late-evening flight in New York is already the next day in UTC), so
     # only whole days are copied.
-    edges = {frame["local_date"].min(), frame["local_date"].max()}
-    frame = frame.loc[~frame["local_date"].isin(edges)]
+    # The window is on departure time, so it decides which days are whole.
+    departures = pd.to_datetime(reference[schema.SCHED_DEP_UTC], utc=True)
+    local_days = departures.dt.tz_convert(TIMEZONE).dt.tz_localize(None).dt.normalize()
+    whole = (frame["local_date"] > local_days.min()) & (
+        frame["local_date"] < local_days.max()
+    )
+    frame = frame.loc[whole]
     weekday = frame["local_date"].dt.dayofweek == target.weekday()
     if not weekday.any():
         return frame.iloc[0:0], None
