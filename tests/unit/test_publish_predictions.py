@@ -6,19 +6,24 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from skydelay.features.schedule import CATEGORICAL_FEATURES, NUMERIC_FEATURES
+from skydelay.features.schedule import (
+    CATEGORICAL_FEATURES,
+    NUMERIC_FEATURES,
+    build_schedule_features,
+)
 from skydelay.models.publish_predictions import (
     build_payload,
     load_validation,
     score_schedule,
 )
+from skydelay.models.train_baseline import artifact_name, train_and_evaluate
 from skydelay.pipeline import schema
 
 SITE_DATA = Path(__file__).resolve().parents[2] / "prototype" / "data"
 
 
 class FixedModel:
-    """Returns a delay probability chosen per destination."""
+    """Returns a delay probability chosen per route."""
 
     feature_names_in_ = np.array([*CATEGORICAL_FEATURES, *NUMERIC_FEATURES])
 
@@ -27,7 +32,7 @@ class FixedModel:
 
     def predict_proba(self, frame):
         assert list(frame.columns) == list(self.feature_names_in_)
-        p = frame["route"].map(self.by_route).to_numpy(dtype=float)
+        p = frame["route"].map(self.by_route).fillna(0.2).to_numpy(dtype=float)
         return np.column_stack([1 - p, p])
 
 
@@ -50,9 +55,11 @@ def schedule():
     )
 
 
+ROUTES = {"LGA-ORD": 0.8, "JFK-BOS": 0.1, "EWR-SFO": 0.5, "ATL-JFK": 0.7}
+
+
 def test_scores_only_new_york_departures_and_keeps_identity():
-    model = FixedModel({"LGA-ORD": 0.8, "JFK-BOS": 0.1, "EWR-SFO": 0.5})
-    scored = score_schedule(model, schedule())
+    scored = score_schedule(FixedModel(ROUTES), schedule())
     assert sorted(scored[schema.ORIGIN]) == ["EWR", "JFK", "LGA"]
     by_flight = scored.set_index(schema.FLIGHT_NUMBER)
     assert by_flight.loc[100, "prediction"] == "delayed"
@@ -62,46 +69,103 @@ def test_scores_only_new_york_departures_and_keeps_identity():
     assert by_flight.loc[100, schema.DEST] == "ORD"
 
 
-def test_payload_confidence_is_probability_of_the_call():
-    model = FixedModel({"LGA-ORD": 0.8, "JFK-BOS": 0.1, "EWR-SFO": 0.5})
+def test_arrivals_use_the_destination_hub_and_derived_arrival_time():
+    scored = score_schedule(FixedModel(ROUTES), schedule(), direction="arrival")
+    # Only AA400 lands at a New York airport; its arrival is departure + block.
+    assert list(scored[schema.FLIGHT_NUMBER]) == [400]
+    assert scored.loc[0, schema.SCHED_ARR_UTC] == pd.Timestamp("2026-11-16T21:10:00Z")
+    assert scored.loc[0, "prediction"] == "delayed"
+
+
+def test_payload_holds_both_directions_with_confidence_of_the_call():
+    model = FixedModel(ROUTES)
     payload = build_payload(
-        score_schedule(model, schedule()),
-        model_name="baseline_1",
+        {
+            "departure": score_schedule(model, schedule()),
+            "arrival": score_schedule(model, schedule(), direction="arrival"),
+        },
+        model_names={"departure": "dep", "arrival": "arr"},
         threshold=0.5,
         horizon_hours=2,
         stale_after_minutes=180,
+        validation={"arrival": {"accuracy": 0.7}},
         generated_at=datetime(2026, 11, 16, 16, tzinfo=UTC),
     )
-    flights = {item["flight"]: item for item in payload["flights"]}
+    flights = {(f["direction"], f["flight"]): f for f in payload["flights"]}
     assert payload["status"] == "published"
     assert payload["generated_at"] == "2026-11-16T16:00:00Z"
-    assert flights["DL100"]["confidence"] == pytest.approx(0.8)
-    assert flights["B6200"]["confidence"] == pytest.approx(0.9)
-    assert flights["B6200"]["scheduled_dep_utc"] == "2026-11-16T18:30:00Z"
-    assert [item["flight"] for item in payload["flights"]] == [
+    assert payload["models"]["arrival"]["validation"] == {"accuracy": 0.7}
+    assert payload["models"]["arrival"]["target"].startswith("Arrival")
+    assert flights[("departure", "DL100")]["confidence"] == pytest.approx(0.8)
+    assert flights[("departure", "B6200")]["confidence"] == pytest.approx(0.9)
+    arrival = flights[("arrival", "AA400")]
+    assert arrival["airport"] == "JFK"
+    assert arrival["origin"] == "ATL"
+    assert arrival["scheduled_utc"] == "2026-11-16T21:10:00Z"
+    assert [f["flight"] for f in payload["flights"]] == [
         "B6200",
         "UA300",
         "DL100",
+        "AA400",
     ]
 
 
-def test_empty_schedule_publishes_no_flights_status():
-    model = FixedModel({})
-    frame = schedule().iloc[[3]]
+def test_direction_without_a_model_is_marked_unpublished():
     payload = build_payload(
-        score_schedule(model, frame),
-        model_name="m",
+        {"departure": score_schedule(FixedModel(ROUTES), schedule().iloc[[3]])},
+        model_names={},
         threshold=0.5,
         horizon_hours=2,
         stale_after_minutes=60,
     )
     assert payload["status"] == "no_flights"
-    assert payload["flights"] == []
+    assert payload["models"]["arrival"] is None
+    assert payload["models"]["departure"] is not None
 
 
 def test_missing_schedule_column_is_reported():
     with pytest.raises(KeyError, match="distance_mi"):
         score_schedule(FixedModel({}), schedule().drop(columns=[schema.DISTANCE_MI]))
+
+
+def test_arrival_features_key_on_scheduled_arrivals_at_the_hub():
+    times = pd.date_range("2024-07-01 12:00", periods=4, freq="10min", tz="UTC")
+    flights = pd.DataFrame(
+        {
+            schema.SCHED_ARR_UTC: times,
+            schema.ORIGIN: ["ATL", "ORD", "BOS", "MIA"],
+            schema.DEST: ["JFK"] * 4,
+            schema.CARRIER: ["DL"] * 4,
+            schema.SCHED_BLOCK_MIN: [120] * 4,
+            schema.DISTANCE_MI: [760] * 4,
+            schema.ARR_DELAYED_30: [False, True, False, True],
+        }
+    )
+    table = build_schedule_features(flights, "arrival")
+    assert set(table["hub"]) == {"JFK"}
+    assert list(table["scheduled_departures_30m"]) == [0, 1, 2, 3]
+    assert schema.ARR_DELAYED_30 in table.columns
+
+
+def test_arrival_baseline_trains_on_arrival_labels():
+    rows = 80
+    times = pd.date_range("2024-01-01", periods=rows, freq="12h", tz="UTC")
+    flights = pd.DataFrame(
+        {
+            schema.SCHED_ARR_UTC: times,
+            schema.ORIGIN: ["ATL", "ORD"] * (rows // 2),
+            schema.DEST: ["JFK"] * rows,
+            schema.CARRIER: ["DL"] * rows,
+            schema.SCHED_BLOCK_MIN: [120] * rows,
+            schema.DISTANCE_MI: [760] * rows,
+            schema.ARR_DELAYED_30: [False, True] * (rows // 2),
+        }
+    )
+    _, metrics = train_and_evaluate(flights, test_days=10, direction="arrival")
+    assert metrics["target"] == schema.ARR_DELAYED_30
+    assert artifact_name("baseline_1_schedule.joblib", "arrival") == (
+        "baseline_1_schedule_arrival.joblib"
+    )
 
 
 def test_validation_reads_one_model_from_a_comparison(tmp_path):
@@ -120,10 +184,13 @@ def test_validation_reads_one_model_from_a_comparison(tmp_path):
 @pytest.mark.parametrize("name", ["predictions.json", "predictions.sample.json"])
 def test_site_files_match_the_published_format(name):
     payload = json.loads((SITE_DATA / name).read_text())
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
     assert set(payload["airports"]) == {"JFK", "LGA", "EWR"}
+    assert set(payload["models"]) == {"departure", "arrival"}
     for flight in payload["flights"]:
-        assert flight["airport"] in payload["airports"]
+        assert flight["direction"] in {"departure", "arrival"}
+        hub = flight["origin"] if flight["direction"] == "departure" else flight["dest"]
+        assert flight["airport"] == hub
         assert flight["prediction"] in {"delayed", "on_time"}
         assert 0.5 <= flight["confidence"] <= 1.0
     if name == "predictions.json":
