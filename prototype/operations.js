@@ -153,6 +153,18 @@
     return cell;
   }
 
+  const STATUS = {
+    departures: {scheduled: 'Scheduled', active: 'Departed · in the air', landed: 'Departed · landed', cancelled: 'Cancelled'},
+    arrivals: {scheduled: 'Scheduled', active: 'In the air', landed: 'Landed', cancelled: 'Cancelled'},
+  };
+  function statusCell(f, arrivals) {
+    const label = STATUS[arrivals ? 'arrivals' : 'departures'][f.status] || (f.status ? f.status[0].toUpperCase() + f.status.slice(1) : 'Not provided');
+    const late = Number(f.delayMin) >= 15;
+    const cell = node('span', `schedule-status${f.status === 'cancelled' ? ' is-cancelled' : late ? ' is-late' : ''}`, label);
+    if (Number(f.delayMin) > 0) cell.append(node('small', null, ` · ${f.delayMin >= 60 ? `${Math.floor(f.delayMin / 60)} h ${f.delayMin % 60} min` : `${f.delayMin} min`} late`));
+    return cell;
+  }
+
   function renderSchedule() {
     const code = schedule.airport;
     const arrivals = schedule.direction === 'arrivals';
@@ -172,34 +184,33 @@
     if (flights == null) {
       message(`${arrivals ? 'Arrivals' : 'Departures'} not available from this source`, 'Use the official airport board for this list.');
     } else {
-      const upcoming = flights.filter((f) => {
-        const when = Date.parse(f.scheduledUtc ? `${f.scheduledUtc.replace(' ', 'T')}Z` : '');
-        return !Number.isFinite(when) || when > Date.now() - 30 * 60000;
-      });
-      if (!upcoming.length) {
-        message(`No ${arrivals ? 'arrivals' : 'departures'} returned`, 'The schedule provider has not returned upcoming flights for this airport. Check the official board.');
+      // The AirLabs free plan returns flights already in the air or recently
+      // landed, not upcoming ones, so the newest are listed first.
+      const listed = flights.slice().sort((a, b) => String(b.scheduledLocal).localeCompare(String(a.scheduledLocal)));
+      if (!listed.length) {
+        message(`No ${arrivals ? 'arrivals' : 'departures'} returned`, 'The schedule provider has not returned flights for this airport. Check the official board.');
       } else {
         const table = node('div', 'schedule-table');
         const head = node('div', 'schedule-row schedule-colhead');
-        ['Flight / route', arrivals ? 'Arrives (ET)' : 'Departs (ET)', arrivals ? 'Terminal / baggage' : 'Terminal / gate', 'Provider status', 'SkyDelay prediction']
+        ['Flight / route', arrivals ? 'Scheduled arrival (ET)' : 'Scheduled departure (ET)', arrivals ? 'Terminal / baggage' : 'Terminal / gate', 'Status', 'SkyDelay prediction']
           .forEach((label) => head.append(node('span', null, label)));
         table.append(head);
-        upcoming.forEach((f) => {
+        listed.forEach((f) => {
           const row = node('div', 'schedule-row');
           const route = arrivals ? `${f.origin || f.otherAirport || '?'} → ${code}` : `${code} → ${f.destination || f.otherAirport || '?'}`;
-          const where = [f.terminal && `T${String(f.terminal).replace(/^T/i, '')}`, arrivals ? f.baggage && `Bag ${f.baggage}` : f.gate && `Gate ${f.gate}`].filter(Boolean).join(' · ');
-          const status = [f.status ? f.status[0].toUpperCase() + f.status.slice(1) : null, f.delayMin ? `+${f.delayMin} min` : null].filter(Boolean).join(' · ');
+          const where = [f.terminal && `Terminal ${String(f.terminal).replace(/^T(?=\d)/i, '')}`, arrivals ? f.baggage && `Bag ${f.baggage}` : f.gate && `Gate ${f.gate}`].filter(Boolean).join(' · ');
           const when = node('span', null, localClock(f.scheduledLocal));
-          if (f.estimatedLocal && f.estimatedLocal !== f.scheduledLocal) when.append(node('small', 'schedule-muted', ` est. ${localClock(f.estimatedLocal)}`));
+          if (f.estimatedLocal && f.estimatedLocal !== f.scheduledLocal) when.append(node('small', 'schedule-muted', ` · ${arrivals ? 'arr.' : 'dep.'} ${localClock(f.estimatedLocal)}`));
           row.append(node('strong', null, `${f.flight} · ${route}`), when, node('span', where ? null : 'schedule-muted', where || 'Not provided'),
-            node('span', status ? null : 'schedule-muted', status || 'Not provided'), predictionCell(f));
+            statusCell(f, arrivals), predictionCell(f));
           table.append(row);
         });
+        $('#scheduleList').replaceChildren(table);
         $('#scheduleList').replaceChildren(table);
       }
     }
     const old = minutesOld(schedule.data.fetchedAt) > SCHEDULES_STALE_MIN;
-    $('#scheduleSource').textContent = `${schedule.data.source || 'AirLabs'} · fetched ${time(schedule.data.fetchedAt)}${old ? ' (may be out of date)' : ''} · partial coverage, at most 50 flights per list · gates/status may be absent`;
+    $('#scheduleSource').textContent = `${schedule.data.source || 'AirLabs'} free plan · fetched ${time(schedule.data.fetchedAt)}${old ? ' (may be out of date)' : ''} · a sample of flights in the air or recently landed, not the full schedule; upcoming departures are not included`;
   }
 
   let requestId = 0;
