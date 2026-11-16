@@ -102,8 +102,8 @@
       button.querySelector('small').textContent = state.data?.models[direction] ? `${count} flights` : 'Not published';
     });
     $('#predPastLabel').textContent = WORDS[state.direction].toggle;
-    const title = $('#pageTitle');
-    if (title) title.textContent = state.direction === 'arrival' ? 'Will your flight arrive on time?' : 'Will your flight leave on time?';
+    const verb = $('#pageTitleVerb');
+    if (verb) verb.textContent = state.direction === 'arrival' ? 'arrive on time?' : 'leave on time?';
   }
 
   function renderTabs() {
@@ -283,6 +283,15 @@
   }
 
   if (AIRPORTS.includes((params.get('airport') || '').toUpperCase())) state.airport = params.get('airport').toUpperCase();
+  // Lets the hero search and its shortcuts drive the board.
+  window.SkyDelayBoard = {
+    select({airport, direction, query} = {}) {
+      if (AIRPORTS.includes(airport)) state.airport = airport;
+      if (direction === 'arrival' || direction === 'departure') state.direction = direction;
+      if (query != null) { state.query = query; $('#predSearch').value = query; }
+      render();
+    },
+  };
   bindControls();
   load();
   setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);

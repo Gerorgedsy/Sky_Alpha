@@ -1,27 +1,86 @@
-# SkyDelay prototype
+# SkyDelay website
 
-The default [`index.html`](index.html) is a **forecast workspace** for the New York region. Its **Delay predictions** board (`predictions.js`, `predictions.css`) reads [`data/predictions.json`](data/predictions.json) and shows, per airport (JFK, LGA, EWR) and for departures or arrivals, each upcoming flight's delayed / on-time call and model confidence, with search, filters, sorting and summary counts. It re-reads the file every five minutes, labels predictions older than the file's `stale_after_minutes` as out of date, and shows an explicit empty state before the first publish. `?sample=1` loads [`data/predictions.sample.json`](data/predictions.sample.json), illustrative data (marked with a “Sample” label); `?airport=LGA` opens a given airport and `?view=arrivals` the arrivals board. Regenerate the live file with `python -m skydelay.models.publish_predictions` (see the root README). It uses a public, read-only backend to show live FAA airport advisories, NOAA aviation weather observations, and aircraft positions from [adsb.lol](https://www.adsb.lol/docs/open-data/api) under ODbL 1.0. The page checks aircraft positions every 30 seconds; the backend refreshes that source about every 3½ minutes without a key. Weather and FAA data refresh every five minutes. Stale and unavailable states are explicit.
+The public site at <https://gerorgedsy.github.io/Sky_Alpha/prototype/> is a
+static GitHub Pages site for JFK, LGA and EWR. It uses a dark "night glass"
+design: an original illustrated night airfield behind a floating navigation
+pill, a large gradient headline, frosted cards and white pill buttons.
 
-The schedule area links to the official JFK, EWR, and LGA flight boards, where users can verify gates and flight status. An optional backend `AIRLABS_API_KEY` connects the [AirLabs Schedules API](https://airlabs.co/docs/schedules) for a partial in-page departures list. The free plan has limited coverage and may omit gate or status fields; the UI shows missing values rather than inventing them. AirLabs data is operational status, not a SkyDelay model forecast. Store any key only as a backend runtime secret, never in GitHub Pages source.
+## Page sections
 
-The [`replay.html`](replay.html) page preserves the 7,399-flight November 18–24, 2023 delay forecast backtest. It supports flight and route search, date selection, sorting, and per-flight details. The median delay was forecast two hours before departure. Confidence is the estimated chance that actual delay falls within ±15 minutes of the median; the 90th percentile is an upper forecast threshold, not a guaranteed worst case. The replay is not current flight status.
+- **Hero** (`hero.js`). The heading reads *Will your flight leave on time?* and
+  switches to *…arrive on time?* in the arrivals view. The search box takes a
+  flight number, destination or airport (JFK, LGA, EWR, Kennedy, LaGuardia,
+  Newark) and jumps to the matching predictions; the *Try* chips open common
+  views. The **Right now** card lists each airport's FAA events and weather from
+  the same feed as the conditions section.
+- **Delay predictions** (`predictions.js`, `predictions.css`). Reads
+  [`data/predictions.json`](data/predictions.json) and shows, per airport and for
+  departures or arrivals, each upcoming flight's *delayed* (30+ min) / *on time*
+  call and model confidence, with search, filters, sorting and summary tiles. It
+  re-reads the file every five minutes, marks predictions older than
+  `stale_after_minutes` as out of date, and shows an explicit empty state before
+  the first publish. Regenerate the file with
+  `python -m skydelay.models.publish_predictions` (see the root README).
+- **Flight schedules and gates** (`operations.js`). Departures / arrivals and
+  airport switches; recent and in-air flights with terminal, gate or baggage,
+  status and delay. On the AirLabs free plan this is a sample of current
+  flights, not the full upcoming schedule; the footer says so and links the
+  official airport boards.
+- **Live airport conditions** (`operations.js`). FAA ground stops, delay
+  programs and closures with their range or end time, and METAR flight category,
+  wind, visibility and temperature.
+- **Live airspace** (`live.js`). Aircraft positions from
+  [adsb.lol](https://www.adsb.lol/docs/open-data/api) (ODbL 1.0) via the
+  `live-service` backend, refreshed every 30 seconds.
+- **Replay** ([`replay.html`](replay.html), `app.js`). The 7,399-flight
+  November 18–24, 2023 backtest: median delay forecast two hours before
+  departure, confidence that the actual delay lands within ±15 minutes, and the
+  90th percentile as an upper threshold. It is not current flight status.
 
-## Source and rebuild
+URL options: `?sample=1` previews the predictions board with illustrative data
+from [`data/predictions.sample.json`](data/predictions.sample.json);
+`?view=arrivals` opens the arrivals board; `?airport=LGA` opens an airport;
+`?liveData=<url>` points conditions and flight boards at another snapshot
+location (for testing).
 
-- `index.html`, `live.js`, `operations.js`, `live.css`: forecast workspace and live operational views.
-- `predictions.js`, `predictions.css`, `data/`: delay / on-time prediction board and its published data.
-- `operations.js`: airport conditions and the departures / arrivals flight board. Each falls back to the `live-data` branch snapshots (see the root README) when the backend is unreachable; `?liveData=<url>` points it elsewhere for testing.
-- `replay.html`, `app.js`: historical forecast replay and interaction.
-- `styles.css`, `favicon.svg`: shared presentation.
-- `template.html`: replay markup with an embedded-data placeholder.
-- `build_site.py`: rebuilds `replay.html` from the template while preserving the embedded dataset.
-- `flight_model.py`: research export script; it expects local input files and can produce a replacement `site_data.json` in its configured environment.
-- `../live-service/`: backend source, shared D1 cache, migration, and tests. This is published separately from GitHub Pages.
+## Where the live data comes from
 
-After changing `template.html`, run `python3 prototype/build_site.py` from the repository root. To replace the replay dataset, run `python3 prototype/build_site.py --data path/to/site_data.json`. Changes to either JavaScript file do not need a build.
+Conditions and flight boards try the `live-service` backend first. When it is
+unreachable they read `operations.json` and `schedules.json` from the
+`live-data` branch, which the **Live airport data** workflow
+(`../.github/workflows/live-data.yml`) refreshes twice an hour with
+`python -m skydelay.live.snapshot`. FAA and NOAA need no key; schedules need the
+`AIRLABS_API_KEY` repository secret and refresh at most every six hours to stay
+inside the free quota. Keys live only in GitHub secrets or backend runtime
+secrets, never in the page source.
+
+## Files
+
+- `index.html`: the page. `theme.css` (night glass design, loaded last) over
+  `styles.css`, `live.css` and `predictions.css`.
+- `hero.js`, `predictions.js`, `operations.js`, `live.js`: the sections above.
+- `assets/hero-night-airfield.svg`: hero illustration (original artwork),
+  generated by `assets/build_hero_scene.py`; run that script to change it.
+- `data/predictions.json`, `data/predictions.sample.json`: published and sample
+  predictions.
+- `replay.html`, `template.html`, `app.js`, `build_site.py`: the replay page.
+  After changing `template.html`, run `python3 prototype/build_site.py` from the
+  repository root; pass `--data path/to/site_data.json` to replace the dataset.
+- `flight_model.py`: research export script for the replay dataset.
+- `favicon.svg`: site icon.
+- `../live-service/`: optional backend source, shared D1 cache and tests,
+  published separately from GitHub Pages.
 
 ## Deployment
 
-`index.html` loads its CSS and JavaScript with a `?v=` version suffix so visitors get new files right after a deploy instead of a cached copy. Change that suffix on every stylesheet and script tag whenever you edit one of those files.
+GitHub Pages serves this folder from `main`; pushing changes here updates the
+site within a minute or two. `index.html` and `template.html` load CSS and
+JavaScript with a `?v=` suffix so visitors get new files immediately instead of
+a cached copy: change that suffix on every stylesheet and script tag whenever
+you edit one of those files (and rebuild `replay.html` after editing
+`template.html`).
 
-GitHub Pages serves `prototype/index.html` at `https://gerorgedsy.github.io/Sky_Alpha/prototype/` from the configured branch. Push the `prototype/` files to update the public frontend. The backend is a separate public Sites Worker with its project ID in `live-service/.openai/hosting.json`; changes to `live-service/` also require a new Sites deployment. No API key is committed. For a faster upstream refresh, obtain an adsb.lol key, store it as a backend runtime secret, and adjust `REFRESH_SECONDS` within the provider's quota.
+The backend is a separate public Sites Worker (project ID in
+`live-service/.openai/hosting.json`); changes to `live-service/` need a new
+Sites deployment. For a faster aircraft refresh, store an adsb.lol key as a
+backend runtime secret and adjust `REFRESH_SECONDS` within the provider's quota.

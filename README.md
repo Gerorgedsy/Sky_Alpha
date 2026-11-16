@@ -5,6 +5,10 @@ data: forecast departure delays at the 30 busiest US hubs two to six hours
 ahead, using aircraft transponder positions and high-resolution weather
 forecasts instead of lagging airline reports.
 
+**Website:** [gerorgedsy.github.io/Sky_Alpha/prototype](https://gerorgedsy.github.io/Sky_Alpha/prototype/)
+
+![SkyDelay NYC website: night-airfield hero with flight search and a live card of FAA and weather status for JFK, LGA and EWR](docs/images/website-hero.jpg)
+
 ## Team
 
 - Debshree Chowdhury
@@ -20,6 +24,9 @@ OpenSky. The repository now also includes:
   shared temporal holdout;
 - a probability-focused evaluation scorecard;
 - a no-install pilot dashboard under `demo/`;
+- a public New York website (`prototype/`) with departure and arrival
+  delay predictions and model confidence, airport flight boards, live FAA and
+  weather conditions, and a scheduled workflow that keeps its data current;
 - the project definitions, research plan and risks in
   [`docs/midsemester.md`](docs/midsemester.md).
 
@@ -57,7 +64,12 @@ available from OpenSky's flights-by-airport data, and taxi-out times from BTS.
 
 - `src/skydelay/pipeline/`: ingestion and cleaning
 - `src/skydelay/features/`: feature engineering (spatial grid, taxi-out delta, sector density)
-- `src/skydelay/models/`, `src/skydelay/evaluation/`: models and evaluation
+- `src/skydelay/models/`, `src/skydelay/evaluation/`: models and evaluation,
+  including `train_baseline --direction arrival` and `publish_predictions`
+- `src/skydelay/live/`: snapshots of FAA, NOAA and AirLabs data for the website
+- `prototype/`: the public website (GitHub Pages) and the 2023 forecast replay
+- `live-service/`: optional Cloudflare Worker backend for live feeds
+- `.github/workflows/`: CI, and the half-hourly **Live airport data** refresh
 - `demo/`: interactive pilot risk board with threshold and fallback controls
 - `docs/midsemester.md`: customer discovery, data, modeling, evaluation and risk plan
 - `config/sources.json`: hubs (codes, coordinates, timezones), study window, source settings
@@ -191,7 +203,26 @@ precision, F1, accuracy, weather coverage and improvement over Baseline 1.
 
 ## Live SkyDelay prototype
 
-The [public prototype](https://gerorgedsy.github.io/Sky_Alpha/prototype/) is a New York forecast workspace. Its **Delay predictions** board calls each upcoming departure from and arrival at JFK, LGA and EWR *delayed* (30+ minutes late) or *on time*, with the model's confidence in that call; a Departures / Arrivals switch flips between the two. The board reads `prototype/data/predictions.json`, which the team regenerates and pushes (see [Publishing predictions](#publishing-predictions)); until the first publish it says so rather than showing numbers. Add `?sample=1` to the URL to preview the layout with clearly labelled illustrative data. The live airport section combines FAA NAS advisories, NOAA aviation weather, and adsb.lol aircraft observations through a shared-cache backend, and the [historical forecast replay](prototype/replay.html) keeps the November 2023 backtest. See [`prototype/README.md`](prototype/README.md) and [`live-service/README.md`](live-service/README.md) for limits and deployment details.
+The [public website](https://gerorgedsy.github.io/Sky_Alpha/prototype/) is a
+dark, glass-style flight-intelligence page for New York's three airports. From
+top to bottom:
+
+| Section | What it shows | Data |
+|---|---|---|
+| Hero | Flight / destination / airport search, shortcuts, and a **Right now** card with each airport's FAA status and weather | FAA NAS, NOAA METAR |
+| Delay predictions | Every upcoming departure and arrival called *delayed* (30+ min) or *on time*, with model confidence; Departures / Arrivals switch, per-airport tabs, summary tiles, search, filters and sort | `prototype/data/predictions.json` |
+| Flight boards | Recent and in-air departures and arrivals with terminal, gate or baggage, status and how late they ran | AirLabs (free plan) |
+| Airport conditions | FAA ground stops, delay programs and closures, plus flight category, wind and visibility | FAA NAS, NOAA METAR |
+| Live airspace | Aircraft positions around New York on a plot and in a searchable list | adsb.lol via `live-service/` |
+| [Replay](prototype/replay.html) | The November 18–24, 2023 forecast backtest | embedded export |
+
+The heading reads *Will your flight leave on time?* for departures and
+*…arrive on time?* for arrivals. The predictions board says plainly when nothing
+has been published yet; add `?sample=1` to the URL to preview it with
+illustrative data, `?view=arrivals` to open the arrivals board, or
+`?airport=LGA` to open an airport. The night-airfield illustration is original
+artwork drawn as SVG by `prototype/assets/build_hero_scene.py`. See
+[`prototype/README.md`](prototype/README.md) for files and deployment.
 
 ### Live airport data
 
