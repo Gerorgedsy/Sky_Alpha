@@ -53,9 +53,9 @@
   async function refreshConditions() {
     try { renderConditions(await get('/operations')); }
     catch {
-      $('#operationsStatus').textContent = 'Airport conditions are not connected in the published backend yet.';
+      $('#operationsStatus').textContent = 'Airport conditions are not currently available here.';
       const fallback = node('div', 'card airport-fallback');
-      fallback.append(node('strong', null, 'Check the official sources while this connection is pending.'), node('p', null, 'SkyDelay is not showing a current FAA or weather reading here.'));
+      fallback.append(node('strong', null, 'Check the official sources for current conditions.'), node('p', null, 'SkyDelay is not showing a current FAA or weather reading here.'));
       for (const [label, href] of [
         ['FAA NAS Status', 'https://nasstatus.faa.gov/'],
         ['NOAA Aviation Weather', 'https://aviationweather.gov/'],
@@ -106,7 +106,7 @@
       $('#scheduleSource').textContent = `${data.status === 'stale' ? 'Last available' : 'AirLabs'} · fetched ${time(data.fetchedAt)} · partial coverage, at most 50 flights · gates/status may be absent`;
     } catch {
       if (current !== requestId) return;
-      $('#scheduleList').replaceChildren(node('strong', null, 'No live schedule connection yet'), node('p', null, 'Use the official airport board for current departures and gates. A schedule provider key is needed for an in-page board.'));
+      $('#scheduleList').replaceChildren(node('strong', null, 'Schedule data unavailable here'), node('p', null, 'Use the official airport board for current departures and gates. An in-page board requires a schedule provider key.'));
       $('#scheduleSource').textContent = 'No current provider data available.';
     }
   }
