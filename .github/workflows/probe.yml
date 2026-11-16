@@ -1,0 +1,9 @@
+name: probe
+on: {push: {branches: [probe-airlabs]}}
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 probe.py
+        env: {K: "${{ secrets.AIRLABS_API_KEY }}"}
