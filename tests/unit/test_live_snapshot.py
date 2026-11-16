@@ -12,6 +12,13 @@ FAA_XML = """<AIRPORT_STATUS_INFORMATION>
 <Max>2 hours</Max></Ground_Delay>
 <Ground_Delay><ARPT>SFO</ARPT><Reason>wind</Reason><Avg>1 hour</Avg></Ground_Delay>
 </Ground_Delay_List></Delay_type>
+<Delay_type><Name>Ground Stop Programs</Name><Ground_Stop_List>
+<Program><ARPT>JFK</ARPT><Reason>thunderstorms</Reason><End_Time>3:15 pm EST</End_Time></Program>
+</Ground_Stop_List></Delay_type>
+<Delay_type><Name>General Arrival/Departure Delay Info</Name><Arrival_Departure_Delay_List>
+<Delay><ARPT>JFK</ARPT><Reason>WX:Wind</Reason><Arrival_Departure Type="Departure">
+<Min>16 minutes</Min><Max>30 minutes</Max><Trend>Increasing</Trend></Arrival_Departure></Delay>
+</Arrival_Departure_Delay_List></Delay_type>
 <Delay_type><Name>Airport Closures</Name><Airport_Closure_List>
 <Airport><ARPT>LGA</ARPT><Reason>runway work</Reason></Airport>
 </Airport_Closure_List></Delay_type>
@@ -21,15 +28,20 @@ FAA_XML = """<AIRPORT_STATUS_INFORMATION>
 def test_faa_events_are_kept_for_new_york_airports_only():
     faa = snapshot.normalize_faa(FAA_XML)
     assert faa["updatedAt"] == "2026-11-16T19:02:31Z"
-    assert faa["events"]["JFK"] == []
     assert faa["events"]["EWR"] == [
         {
             "type": "Ground Delay Programs",
             "reason": "low ceilings",
             "averageDelay": "57 minutes",
             "maximumDelay": "2 hours",
+            "endTime": None,
+            "direction": None,
         }
     ]
+    stop, delay = faa["events"]["JFK"]
+    assert stop["endTime"] == "3:15 pm EST"
+    assert delay["averageDelay"] == "16 minutes to 30 minutes"
+    assert delay["direction"] == "Departure"
     assert faa["events"]["LGA"][0]["type"] == "Airport Closures"
 
 

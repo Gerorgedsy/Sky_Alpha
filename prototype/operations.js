@@ -68,7 +68,12 @@
       const events = data.faa?.events?.[code];
       if (Array.isArray(events)) {
         if (!events.length) card.append(node('p', 'airport-normal', 'No active FAA-listed event'));
-        else events.forEach((event) => card.append(node('p', 'airport-alert', `${event.type}${event.averageDelay ? ` · average ${event.averageDelay}` : ''}${event.reason ? ` · ${event.reason}` : ''}`)));
+        else events.forEach((event) => card.append(node('p', 'airport-alert', [
+          event.direction ? `${event.type.replace('General Arrival/Departure Delay Info', 'Delays')} (${event.direction.toLowerCase()}s)` : event.type,
+          event.averageDelay && (/ to /.test(event.averageDelay) ? event.averageDelay : `average ${event.averageDelay}`),
+          event.endTime && `until ${event.endTime}`,
+          event.reason,
+        ].filter(Boolean).join(' · '))));
       } else card.append(node('p', 'airport-unknown', 'FAA status unavailable'));
       const weather = data.weather?.airports?.[code];
       if (weather) {
