@@ -53,8 +53,18 @@
   async function refreshConditions() {
     try { renderConditions(await get('/operations')); }
     catch {
-      $('#operationsStatus').textContent = 'Live airport conditions unavailable; try again shortly.';
-      $('#airportConditions').replaceChildren(node('div', 'card', 'FAA and weather feeds could not be reached.'));
+      $('#operationsStatus').textContent = 'Airport conditions are not connected in the published backend yet.';
+      const fallback = node('div', 'card airport-fallback');
+      fallback.append(node('strong', null, 'Check the official sources while this connection is pending.'), node('p', null, 'SkyDelay is not showing a current FAA or weather reading here.'));
+      for (const [label, href] of [
+        ['FAA NAS Status', 'https://nasstatus.faa.gov/'],
+        ['NOAA Aviation Weather', 'https://aviationweather.gov/'],
+      ]) {
+        const link = node('a', 'text-link', `${label} ↗`);
+        link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer';
+        fallback.append(link);
+      }
+      $('#airportConditions').replaceChildren(fallback);
     }
   }
   let selected = 'JFK';
@@ -96,7 +106,7 @@
       $('#scheduleSource').textContent = `${data.status === 'stale' ? 'Last available' : 'AirLabs'} · fetched ${time(data.fetchedAt)} · partial coverage, at most 50 flights · gates/status may be absent`;
     } catch {
       if (current !== requestId) return;
-      $('#scheduleList').replaceChildren(node('strong', null, 'Schedule feed unavailable'), node('p', null, 'Use the official airport board for current departures and gates.'));
+      $('#scheduleList').replaceChildren(node('strong', null, 'No live schedule connection yet'), node('p', null, 'Use the official airport board for current departures and gates. A schedule provider key is needed for an in-page board.'));
       $('#scheduleSource').textContent = 'No current provider data available.';
     }
   }
