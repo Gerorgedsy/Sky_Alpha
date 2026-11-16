@@ -2,7 +2,8 @@ import json, os, urllib.request, urllib.parse, collections
 key = os.environ["K"]
 def get(**q):
     q.update(api_key=key, limit=50)
-    return json.loads(urllib.request.urlopen("https://airlabs.co/api/v9/schedules?" + urllib.parse.urlencode(q), timeout=30).read())
+    req = urllib.request.Request("https://airlabs.co/api/v9/schedules?" + urllib.parse.urlencode(q), headers={"User-Agent": "SkyDelay-Alpha student project (github.com/Gerorgedsy/Sky_Alpha)", "Accept": "application/json"})
+    return json.loads(urllib.request.urlopen(req, timeout=30).read())
 for off in (0, 50, 150, 300):
     r = get(dep_iata="JFK", offset=off)
     rows = r.get("response") or []
