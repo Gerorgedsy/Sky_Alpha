@@ -209,9 +209,6 @@ writes them twice an hour with `python -m skydelay.live.snapshot`:
   refreshed at most every six hours, about 720 of the free plan's 1,000 monthly
   requests; run the workflow by hand with *force schedules* to refresh now.
 
-The flight board shows SkyDelay's prediction next to any flight that appears in
-`predictions.json`.
-
 ### Publishing predictions
 
 1. Train a departure and an arrival baseline (above). Arrival models are

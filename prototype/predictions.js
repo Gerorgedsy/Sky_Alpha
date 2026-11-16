@@ -82,9 +82,8 @@
       return;
     }
     const stale = Date.now() - data.generatedMs > (data.stale_after_minutes || 180) * 60000;
-    const pill = SAMPLE ? ['pred-pill-wait', 'Sample'] : stale ? ['pred-pill-stale', 'Out of date'] : ['pred-pill-live', 'Current'];
+    if (!SAMPLE) meta.append(node('span', `pred-pill ${stale ? 'pred-pill-stale' : 'pred-pill-live'}`, stale ? 'Out of date' : 'Current'));
     meta.append(
-      node('span', `pred-pill ${pill[0]}`, pill[1]),
       node('span', null, `Updated ${ago(data.generatedMs)}`),
       node('small', null, `${day.format(data.generatedMs)}, ${clock.format(data.generatedMs)} ET · model ${model()?.name || 'not published'}`),
     );
@@ -259,8 +258,6 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       state.data = normalise(await response.json());
       render();
-      // Lets the schedule board show a flight's prediction. Sample data is never shared.
-      window.dispatchEvent(new CustomEvent('skydelay:predictions', {detail: SAMPLE ? [] : state.data.flights}));
     } catch {
       if (state.data) { renderMeta(); return; }
       $('#predMeta').replaceChildren(node('span', 'pred-pill pred-pill-stale', 'Unavailable'));

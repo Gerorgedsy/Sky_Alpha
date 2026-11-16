@@ -110,13 +110,6 @@
 
   // ---- Flight schedules ---------------------------------------------------
   const schedule = {airport: 'JFK', direction: 'departures', data: null, source: null};
-  const predictions = new Map();
-  window.addEventListener('skydelay:predictions', (event) => {
-    predictions.clear();
-    (event.detail || []).forEach((f) => predictions.set(`${f.direction}:${f.flight}`, f));
-    if (schedule.data) renderSchedule();
-  });
-
   function normaliseBackend(data, airport) {
     // The backend returns departures for one airport in its own shape.
     return {
@@ -141,16 +134,6 @@
 
   function message(title, text) {
     $('#scheduleList').replaceChildren(node('strong', null, title), node('p', null, text));
-  }
-
-  function predictionCell(flight) {
-    const key = `${schedule.direction === 'arrivals' ? 'arrival' : 'departure'}:${String(flight.flight || '').replace(/\s/g, '')}`;
-    const match = predictions.get(key);
-    if (!match) return node('span', 'schedule-muted', '—');
-    const delayed = match.prediction === 'delayed';
-    const cell = node('span', `schedule-pred ${delayed ? 'is-delayed' : 'is-ontime'}`, `${delayed ? 'Delayed' : 'On time'} · ${Math.round(match.confidence * 100)}%`);
-    cell.title = 'SkyDelay model prediction and confidence';
-    return cell;
   }
 
   const STATUS = {
@@ -192,7 +175,7 @@
       } else {
         const table = node('div', 'schedule-table');
         const head = node('div', 'schedule-row schedule-colhead');
-        ['Flight / route', arrivals ? 'Scheduled arrival (ET)' : 'Scheduled departure (ET)', arrivals ? 'Terminal / baggage' : 'Terminal / gate', 'Status', 'SkyDelay prediction']
+        ['Flight / route', arrivals ? 'Scheduled arrival (ET)' : 'Scheduled departure (ET)', arrivals ? 'Terminal / baggage' : 'Terminal / gate', 'Status']
           .forEach((label) => head.append(node('span', null, label)));
         table.append(head);
         listed.forEach((f) => {
@@ -202,7 +185,7 @@
           const when = node('span', null, localClock(f.scheduledLocal));
           if (f.estimatedLocal && f.estimatedLocal !== f.scheduledLocal) when.append(node('small', 'schedule-muted', ` · ${arrivals ? 'arr.' : 'dep.'} ${localClock(f.estimatedLocal)}`));
           row.append(node('strong', null, `${f.flight} · ${route}`), when, node('span', where ? null : 'schedule-muted', where || 'Not provided'),
-            statusCell(f, arrivals), predictionCell(f));
+            statusCell(f, arrivals));
           table.append(row);
         });
         $('#scheduleList').replaceChildren(table);
