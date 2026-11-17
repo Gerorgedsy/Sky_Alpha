@@ -1,0 +1,587 @@
+{
+ "dataset": {
+  "flights": 720407,
+  "start": "2025-09-01",
+  "end": "2026-08-31",
+  "carriers": 13,
+  "routes": 495,
+  "cancelled_share": 0.0417
+ },
+ "departure": {
+  "flights": 346019,
+  "delay_rate": 0.1616,
+  "median_delay_min": -3.0,
+  "mean_delay_min": 15.6,
+  "p90_delay_min": 57.0,
+  "by_airport": {
+   "EWR": {
+    "delay_rate": 0.1417,
+    "flights": 118333
+   },
+   "JFK": {
+    "delay_rate": 0.1631,
+    "flights": 98886
+   },
+   "LGA": {
+    "delay_rate": 0.1786,
+    "flights": 128800
+   }
+  },
+  "by_local_hour": {
+   "5": {
+    "delay_rate": 0.064,
+    "flights": 2796
+   },
+   "6": {
+    "delay_rate": 0.06,
+    "flights": 25971
+   },
+   "7": {
+    "delay_rate": 0.0679,
+    "flights": 29331
+   },
+   "8": {
+    "delay_rate": 0.0895,
+    "flights": 23232
+   },
+   "9": {
+    "delay_rate": 0.0965,
+    "flights": 22501
+   },
+   "10": {
+    "delay_rate": 0.1178,
+    "flights": 17992
+   },
+   "11": {
+    "delay_rate": 0.1175,
+    "flights": 23001
+   },
+   "12": {
+    "delay_rate": 0.1412,
+    "flights": 15331
+   },
+   "13": {
+    "delay_rate": 0.1468,
+    "flights": 19122
+   },
+   "14": {
+    "delay_rate": 0.1811,
+    "flights": 20088
+   },
+   "15": {
+    "delay_rate": 0.1998,
+    "flights": 24595
+   },
+   "16": {
+    "delay_rate": 0.1986,
+    "flights": 21317
+   },
+   "17": {
+    "delay_rate": 0.2236,
+    "flights": 22313
+   },
+   "18": {
+    "delay_rate": 0.2449,
+    "flights": 20553
+   },
+   "19": {
+    "delay_rate": 0.2444,
+    "flights": 21102
+   },
+   "20": {
+    "delay_rate": 0.2817,
+    "flights": 17911
+   },
+   "21": {
+    "delay_rate": 0.2576,
+    "flights": 14657
+   },
+   "22": {
+    "delay_rate": 0.318,
+    "flights": 4138
+   },
+   "23": {
+    "delay_rate": 0.4559,
+    "flights": 68
+   }
+  },
+  "by_month": {
+   "2025-09": {
+    "delay_rate": 0.1096,
+    "flights": 29665
+   },
+   "2025-10": {
+    "delay_rate": 0.1443,
+    "flights": 30992
+   },
+   "2025-11": {
+    "delay_rate": 0.1671,
+    "flights": 29519
+   },
+   "2025-12": {
+    "delay_rate": 0.211,
+    "flights": 29728
+   },
+   "2026-01": {
+    "delay_rate": 0.1377,
+    "flights": 27056
+   },
+   "2026-02": {
+    "delay_rate": 0.142,
+    "flights": 24796
+   },
+   "2026-03": {
+    "delay_rate": 0.1885,
+    "flights": 29330
+   },
+   "2026-04": {
+    "delay_rate": 0.1177,
+    "flights": 29871
+   },
+   "2026-05": {
+    "delay_rate": 0.1163,
+    "flights": 29889
+   },
+   "2026-06": {
+    "delay_rate": 0.1555,
+    "flights": 28917
+   },
+   "2026-07": {
+    "delay_rate": 0.2336,
+    "flights": 27897
+   },
+   "2026-08": {
+    "delay_rate": 0.2184,
+    "flights": 28359
+   }
+  },
+  "by_weekday": {
+   "Fri": {
+    "delay_rate": 0.1553,
+    "flights": 52107
+   },
+   "Mon": {
+    "delay_rate": 0.1815,
+    "flights": 51050
+   },
+   "Sat": {
+    "delay_rate": 0.1552,
+    "flights": 41586
+   },
+   "Sun": {
+    "delay_rate": 0.2027,
+    "flights": 49078
+   },
+   "Thu": {
+    "delay_rate": 0.1678,
+    "flights": 51487
+   },
+   "Tue": {
+    "delay_rate": 0.14,
+    "flights": 49843
+   },
+   "Wed": {
+    "delay_rate": 0.1284,
+    "flights": 50868
+   }
+  },
+  "minutes_histogram": {
+   "15+ early": 1399,
+   "0\u201315 early": 219542,
+   "0\u201315 late": 48542,
+   "15\u201330": 21706,
+   "30\u201360": 22187,
+   "60\u2013120": 18353,
+   "120+": 14290
+  },
+  "by_carrier": {
+   "AA": {
+    "delay_rate": 0.1632,
+    "flights": 37784
+   },
+   "AS": {
+    "delay_rate": 0.1283,
+    "flights": 6860
+   },
+   "B6": {
+    "delay_rate": 0.2067,
+    "flights": 43008
+   },
+   "DL": {
+    "delay_rate": 0.149,
+    "flights": 64510
+   },
+   "F9": {
+    "delay_rate": 0.2357,
+    "flights": 5286
+   },
+   "NK": {
+    "delay_rate": 0.227,
+    "flights": 9220
+   },
+   "OO": {
+    "delay_rate": 0.1997,
+    "flights": 611
+   },
+   "UA": {
+    "delay_rate": 0.1504,
+    "flights": 75689
+   },
+   "WN": {
+    "delay_rate": 0.2301,
+    "flights": 11231
+   },
+   "YX": {
+    "delay_rate": 0.1409,
+    "flights": 90658
+   }
+  },
+  "by_weather": {
+   "thunderstorm": {
+    "delay_rate": 0.7052,
+    "flights": 916
+   },
+   "rain_or_snow": {
+    "delay_rate": 0.2427,
+    "flights": 29261
+   },
+   "ceiling_below_1000ft": {
+    "delay_rate": 0.2343,
+    "flights": 16316
+   },
+   "gusts_25kt_plus": {
+    "delay_rate": 0.2281,
+    "flights": 35037
+   },
+   "clear_and_calm": {
+    "delay_rate": 0.1366,
+    "flights": 233986
+   }
+  },
+  "by_recent_airport_delay": {
+   "early": {
+    "delay_rate": 0.1019,
+    "flights": 150311
+   },
+   "0\u201315 min": {
+    "delay_rate": 0.2039,
+    "flights": 124921
+   },
+   "15\u201330 min": {
+    "delay_rate": 0.4185,
+    "flights": 19017
+   },
+   "30\u201360 min": {
+    "delay_rate": 0.6483,
+    "flights": 5220
+   },
+   "60+ min": {
+    "delay_rate": 0.861,
+    "flights": 892
+   }
+  }
+ },
+ "arrival": {
+  "flights": 343203,
+  "delay_rate": 0.1766,
+  "median_delay_min": -7.0,
+  "mean_delay_min": 11.2,
+  "p90_delay_min": 63.0,
+  "by_airport": {
+   "EWR": {
+    "delay_rate": 0.1602,
+    "flights": 117581
+   },
+   "JFK": {
+    "delay_rate": 0.162,
+    "flights": 97970
+   },
+   "LGA": {
+    "delay_rate": 0.2029,
+    "flights": 127652
+   }
+  },
+  "by_local_hour": {
+   "0": {
+    "delay_rate": 0.2313,
+    "flights": 3787
+   },
+   "1": {
+    "delay_rate": 0.2826,
+    "flights": 1019
+   },
+   "2": {
+    "delay_rate": 0.3913,
+    "flights": 69
+   },
+   "3": {
+    "delay_rate": 0.4,
+    "flights": 5
+   },
+   "4": {
+    "delay_rate": 0.1036,
+    "flights": 502
+   },
+   "5": {
+    "delay_rate": 0.1193,
+    "flights": 5020
+   },
+   "6": {
+    "delay_rate": 0.1004,
+    "flights": 5695
+   },
+   "7": {
+    "delay_rate": 0.0835,
+    "flights": 18424
+   },
+   "8": {
+    "delay_rate": 0.0729,
+    "flights": 16288
+   },
+   "9": {
+    "delay_rate": 0.066,
+    "flights": 18206
+   },
+   "10": {
+    "delay_rate": 0.0792,
+    "flights": 18706
+   },
+   "11": {
+    "delay_rate": 0.0873,
+    "flights": 17361
+   },
+   "12": {
+    "delay_rate": 0.1145,
+    "flights": 16263
+   },
+   "13": {
+    "delay_rate": 0.1335,
+    "flights": 19817
+   },
+   "14": {
+    "delay_rate": 0.1495,
+    "flights": 22850
+   },
+   "15": {
+    "delay_rate": 0.1533,
+    "flights": 21669
+   },
+   "16": {
+    "delay_rate": 0.1895,
+    "flights": 20009
+   },
+   "17": {
+    "delay_rate": 0.2179,
+    "flights": 21048
+   },
+   "18": {
+    "delay_rate": 0.2374,
+    "flights": 19547
+   },
+   "19": {
+    "delay_rate": 0.2731,
+    "flights": 19652
+   },
+   "20": {
+    "delay_rate": 0.2803,
+    "flights": 21734
+   },
+   "21": {
+    "delay_rate": 0.3036,
+    "flights": 20966
+   },
+   "22": {
+    "delay_rate": 0.2871,
+    "flights": 15936
+   },
+   "23": {
+    "delay_rate": 0.2469,
+    "flights": 18630
+   }
+  },
+  "by_month": {
+   "2025-09": {
+    "delay_rate": 0.1169,
+    "flights": 29397
+   },
+   "2025-10": {
+    "delay_rate": 0.1826,
+    "flights": 30833
+   },
+   "2025-11": {
+    "delay_rate": 0.1982,
+    "flights": 29422
+   },
+   "2025-12": {
+    "delay_rate": 0.2201,
+    "flights": 29662
+   },
+   "2026-01": {
+    "delay_rate": 0.1428,
+    "flights": 27060
+   },
+   "2026-02": {
+    "delay_rate": 0.1473,
+    "flights": 24738
+   },
+   "2026-03": {
+    "delay_rate": 0.2193,
+    "flights": 29171
+   },
+   "2026-04": {
+    "delay_rate": 0.1301,
+    "flights": 29809
+   },
+   "2026-05": {
+    "delay_rate": 0.1186,
+    "flights": 29704
+   },
+   "2026-06": {
+    "delay_rate": 0.1759,
+    "flights": 28572
+   },
+   "2026-07": {
+    "delay_rate": 0.2423,
+    "flights": 26873
+   },
+   "2026-08": {
+    "delay_rate": 0.2265,
+    "flights": 27957
+   },
+   "2026-09": {
+    "delay_rate": 0.2,
+    "flights": 5
+   }
+  },
+  "by_weekday": {
+   "Fri": {
+    "delay_rate": 0.1627,
+    "flights": 51554
+   },
+   "Mon": {
+    "delay_rate": 0.2021,
+    "flights": 50818
+   },
+   "Sat": {
+    "delay_rate": 0.1606,
+    "flights": 41850
+   },
+   "Sun": {
+    "delay_rate": 0.2214,
+    "flights": 47743
+   },
+   "Thu": {
+    "delay_rate": 0.1913,
+    "flights": 50684
+   },
+   "Tue": {
+    "delay_rate": 0.1596,
+    "flights": 50018
+   },
+   "Wed": {
+    "delay_rate": 0.1379,
+    "flights": 50536
+   }
+  },
+  "minutes_histogram": {
+   "15+ early": 110849,
+   "0\u201315 early": 101854,
+   "0\u201315 late": 47828,
+   "15\u201330": 23294,
+   "30\u201360": 23715,
+   "60\u2013120": 20140,
+   "120+": 15523
+  },
+  "by_carrier": {
+   "AA": {
+    "delay_rate": 0.2237,
+    "flights": 37352
+   },
+   "AS": {
+    "delay_rate": 0.1092,
+    "flights": 6779
+   },
+   "B6": {
+    "delay_rate": 0.1974,
+    "flights": 42642
+   },
+   "DL": {
+    "delay_rate": 0.1597,
+    "flights": 63849
+   },
+   "F9": {
+    "delay_rate": 0.2502,
+    "flights": 5276
+   },
+   "NK": {
+    "delay_rate": 0.2594,
+    "flights": 9167
+   },
+   "OO": {
+    "delay_rate": 0.2046,
+    "flights": 611
+   },
+   "UA": {
+    "delay_rate": 0.1634,
+    "flights": 74967
+   },
+   "WN": {
+    "delay_rate": 0.2171,
+    "flights": 11158
+   },
+   "YX": {
+    "delay_rate": 0.1582,
+    "flights": 90241
+   }
+  },
+  "by_weather": {
+   "thunderstorm": {
+    "delay_rate": 0.7265,
+    "flights": 998
+   },
+   "rain_or_snow": {
+    "delay_rate": 0.2754,
+    "flights": 28166
+   },
+   "ceiling_below_1000ft": {
+    "delay_rate": 0.2701,
+    "flights": 15579
+   },
+   "gusts_25kt_plus": {
+    "delay_rate": 0.2571,
+    "flights": 35605
+   },
+   "clear_and_calm": {
+    "delay_rate": 0.1481,
+    "flights": 231339
+   }
+  },
+  "by_recent_airport_delay": {
+   "early": {
+    "delay_rate": 0.0922,
+    "flights": 144597
+   },
+   "0\u201315 min": {
+    "delay_rate": 0.19,
+    "flights": 140942
+   },
+   "15\u201330 min": {
+    "delay_rate": 0.4234,
+    "flights": 25295
+   },
+   "30\u201360 min": {
+    "delay_rate": 0.6411,
+    "flights": 9283
+   },
+   "60+ min": {
+    "delay_rate": 0.8283,
+    "flights": 1905
+   }
+  }
+ },
+ "airports": [
+  "JFK",
+  "LGA",
+  "EWR"
+ ]
+}

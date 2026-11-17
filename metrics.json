@@ -1,0 +1,209 @@
+{
+ "trained_at": "2026-11-17T02:21:26.595680+00:00",
+ "departure": {
+  "rows": 27526,
+  "positive_rate": 0.21931991571605028,
+  "threshold": 0.5,
+  "accuracy": 0.7837680738211146,
+  "precision": 0.5618631732168851,
+  "recall": 0.06393904257081331,
+  "f1": 0.11481261154074955,
+  "roc_auc": 0.717162017004158,
+  "pr_auc": 0.40089966308199193,
+  "brier_score": 0.15382703064861064,
+  "naive_probability": 0.15658428913665293,
+  "naive_brier_score": 0.17515444912866449,
+  "expected_calibration_error": 0.021520235831851604,
+  "without_live_inputs": {
+   "accuracy": 0.7807164135726222,
+   "precision": 0.5128205128205128,
+   "recall": 0.003312903760145768,
+   "brier_score": 0.156660440998502,
+   "roc_auc": 0.7074419729428002,
+   "recall_at_0.3": 0.35298989564353156,
+   "flights": 27526
+  },
+  "by_horizon": {
+   "0-3h": {
+    "accuracy": 0.7955592794302472,
+    "precision": 0.6464646464646465,
+    "recall": 0.12379110251450677,
+    "brier_score": 0.1473941205819814,
+    "roc_auc": 0.7316190692911595,
+    "recall_at_0.3": 0.5454545454545454,
+    "flights": 2387
+   },
+   "3-8h": {
+    "accuracy": 0.7955496805463759,
+    "precision": 0.6635514018691588,
+    "recall": 0.07372793354101766,
+    "brier_score": 0.14744827413800113,
+    "roc_auc": 0.7303058523304085,
+    "recall_at_0.3": 0.5129802699896158,
+    "flights": 4539
+   },
+   "8-30h": {
+    "accuracy": 0.7798058252427185,
+    "precision": 0.5218295218295218,
+    "recall": 0.055080096554750935,
+    "brier_score": 0.15597793026660578,
+    "roc_auc": 0.7125497881892491,
+    "recall_at_0.3": 0.4979152951503182,
+    "flights": 20600
+   }
+  },
+  "direction": "departure",
+  "test_rows": 27526,
+  "train_rows": 318493,
+  "test_start": "2026-08-02",
+  "test_end": "2026-08-31",
+  "delay_rate": 0.21931991571605028,
+  "mae_minutes": 27.85040942549837,
+  "mae_minutes_predict_zero": 28.289689747874736,
+  "within_15_min": 0.6904018019327182,
+  "range_80_coverage": 0.6003778246021942,
+  "range_80_coverage_when_correct": 0.7660146472605914,
+  "recall_at_0.3": 0.5043895974821931,
+  "calibration": [
+   {
+    "bin": "(-0.001, 0.1]",
+    "mean_probability": 0.077,
+    "delay_rate": 0.071,
+    "flights": 3742
+   },
+   {
+    "bin": "(0.1, 0.2]",
+    "mean_probability": 0.157,
+    "delay_rate": 0.126,
+    "flights": 10078
+   },
+   {
+    "bin": "(0.2, 0.3]",
+    "mean_probability": 0.258,
+    "delay_rate": 0.234,
+    "flights": 6237
+   },
+   {
+    "bin": "(0.3, 0.5]",
+    "mean_probability": 0.381,
+    "delay_rate": 0.392,
+    "flights": 6782
+   },
+   {
+    "bin": "(0.5, 0.7]",
+    "mean_probability": 0.578,
+    "delay_rate": 0.541,
+    "flights": 595
+   },
+   {
+    "bin": "(0.7, 1.0]",
+    "mean_probability": 0.765,
+    "delay_rate": 0.696,
+    "flights": 92
+   }
+  ]
+ },
+ "arrival": {
+  "rows": 26254,
+  "positive_rate": 0.2265178639445418,
+  "threshold": 0.5,
+  "accuracy": 0.779538356060029,
+  "precision": 0.5507987220447285,
+  "recall": 0.1449470321170338,
+  "f1": 0.22949946751863684,
+  "roc_auc": 0.7244951877034586,
+  "pr_auc": 0.4237636395301872,
+  "brier_score": 0.15561892470654326,
+  "naive_probability": 0.1724473022473647,
+  "naive_brier_score": 0.17813114690079207,
+  "expected_calibration_error": 0.017506905782423032,
+  "without_live_inputs": {
+   "accuracy": 0.7738249409613773,
+   "precision": 0.5789473684210527,
+   "recall": 0.005549016310744914,
+   "brier_score": 0.16298159015695732,
+   "roc_auc": 0.695609513523493,
+   "recall_at_0.3": 0.3665713805279973,
+   "flights": 26254
+  },
+  "by_horizon": {
+   "0-3h": {
+    "accuracy": 0.8006134969325154,
+    "precision": 0.6458333333333334,
+    "recall": 0.24266144814090018,
+    "brier_score": 0.14542760806858301,
+    "roc_auc": 0.7557147608623828,
+    "recall_at_0.3": 0.6320939334637965,
+    "flights": 2282
+   },
+   "3-8h": {
+    "accuracy": 0.7870477068448951,
+    "precision": 0.6464646464646465,
+    "recall": 0.18991097922848665,
+    "brier_score": 0.1553845217904152,
+    "roc_auc": 0.7248395652628776,
+    "recall_at_0.3": 0.5578635014836796,
+    "flights": 4339
+   },
+   "8-30h": {
+    "accuracy": 0.775429124433352,
+    "precision": 0.5074349442379182,
+    "recall": 0.12338983050847457,
+    "brier_score": 0.15685529504326742,
+    "roc_auc": 0.7205699126537624,
+    "recall_at_0.3": 0.576045197740113,
+    "flights": 19633
+   }
+  },
+  "direction": "arrival",
+  "test_rows": 26254,
+  "train_rows": 316949,
+  "test_start": "2026-08-03",
+  "test_end": "2026-09-01",
+  "delay_rate": 0.2265178639445418,
+  "mae_minutes": 34.17636757730609,
+  "mae_minutes_predict_zero": 34.74228688961682,
+  "within_15_min": 0.555724841928849,
+  "range_80_coverage": 0.597775577054925,
+  "range_80_coverage_when_correct": 0.7668327958565425,
+  "recall_at_0.3": 0.5777703043551371,
+  "calibration": [
+   {
+    "bin": "(-0.001, 0.1]",
+    "mean_probability": 0.084,
+    "delay_rate": 0.059,
+    "flights": 4095
+   },
+   {
+    "bin": "(0.1, 0.2]",
+    "mean_probability": 0.152,
+    "delay_rate": 0.137,
+    "flights": 9176
+   },
+   {
+    "bin": "(0.2, 0.3]",
+    "mean_probability": 0.232,
+    "delay_rate": 0.243,
+    "flights": 4181
+   },
+   {
+    "bin": "(0.3, 0.5]",
+    "mean_probability": 0.366,
+    "delay_rate": 0.356,
+    "flights": 7237
+   },
+   {
+    "bin": "(0.5, 0.7]",
+    "mean_probability": 0.567,
+    "delay_rate": 0.513,
+    "flights": 1201
+   },
+   {
+    "bin": "(0.7, 1.0]",
+    "mean_probability": 0.743,
+    "delay_rate": 0.676,
+    "flights": 364
+   }
+  ]
+ }
+}
