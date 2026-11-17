@@ -290,8 +290,8 @@ change, especially across seasons.
 
 | Workflow | When | What |
 |---|---|---|
-| [Train delay models](.github/workflows/train-models.yml) | 12th of each month, or by hand | Finds the newest BTS month, downloads 12 months for New York, cleans them, trains and evaluates both directions, and force-pushes `departure.joblib`, `arrival.joblib`, `metrics.json` and `schedule.parquet` to the `model-artifacts` branch; the run summary shows the holdout scorecard |
-| [Live airport data](.github/workflows/live-data.yml) | twice an hour | Fetches weather and FAA status (every run) and AirLabs departures (every 3 h) and arrivals (every 12 h), re-scores today and tomorrow with them, and publishes `predictions.json` to the `live-data` branch |
+| [Train delay models](.github/workflows/train-models.yml) | 12th of each month, or by hand | Finds the newest BTS month, downloads 12 months for New York, cleans them, trains and evaluates both directions, writes dataset statistics (`nyc_eda`), and force-pushes `departure.joblib`, `arrival.joblib`, `metrics.json`, `eda.json` and `schedule.parquet` to the `model-artifacts` branch; the run summary shows the holdout scorecard |
+| [Live airport data](.github/workflows/live-data.yml) | every ~30 min (each run queues the next; the cron is a backup) | Fetches weather and FAA status (every run) and AirLabs departures (every 3 h) and arrivals (every 12 h), re-scores today and tomorrow with them, and publishes `predictions.json` to the `live-data` branch |
 
 The page reads `predictions.json` from `live-data` and falls back to
 `prototype/data/predictions.json`. To run the steps yourself:
