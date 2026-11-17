@@ -279,3 +279,18 @@ def test_metar_table_reads_ceiling_and_weather_codes():
     assert table.loc["LGA", "wx_ceiling_ft"] == ctx.NO_CEILING_FT
     assert table.loc["JFK", "wx_thunder"] == 1 and table.loc["JFK", "wx_precip"] == 1
     assert table.loc["LGA", "wx_gust_kt"] == 5
+
+
+def test_eda_summarises_target_and_conditions(flights):
+    from skydelay.models import nyc_eda
+
+    out = nyc_eda.summarise(flights, synthetic_metar(flights))
+    dep = out["departure"]
+    assert out["dataset"]["flights"] == len(flights)
+    assert set(dep["by_airport"]) == {"JFK", "LGA", "EWR"}
+    assert (
+        dep["by_weather"]["thunderstorm"]["delay_rate"]
+        > dep["by_weather"]["clear_and_calm"]["delay_rate"]
+    )
+    assert sum(dep["minutes_histogram"].values()) == dep["flights"]
+    json.dumps(out)

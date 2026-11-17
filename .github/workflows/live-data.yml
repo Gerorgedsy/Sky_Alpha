@@ -27,6 +27,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   refresh:
@@ -91,3 +92,26 @@ jobs:
           git add -A
           git commit -q -m "chore: live airport snapshot $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" live-data
+
+  # GitHub's scheduler did not start a single run of this workflow for hours
+  # after it was added, so each run also starts the next one about 25 minutes
+  # later. A run already waiting in the queue means another chain or the
+  # schedule has it covered, so two chains merge into one instead of doubling.
+  next-run:
+    needs: refresh
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Wait, then queue the next refresh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          sleep 1500
+          queued=$(gh run list --workflow live-data.yml --status queued --json databaseId --jq length)
+          if [ "$queued" = "0" ]; then
+            gh workflow run live-data.yml --ref "${{ github.ref_name }}"
+          else
+            echo "A refresh is already queued; not starting another."
+          fi
