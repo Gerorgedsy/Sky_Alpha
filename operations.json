@@ -1,0 +1,61 @@
+{
+ "status": "live",
+ "source": "FAA NAS Status and NOAA Aviation Weather Center",
+ "fetchedAt": "2026-11-21T16:46:37Z",
+ "faa": {
+  "status": "available",
+  "updatedAt": "2026-11-21T16:46:25Z",
+  "events": {
+   "JFK": [],
+   "EWR": [],
+   "LGA": [
+    {
+     "type": "Ground Delay Programs",
+     "reason": "runway construction",
+     "averageDelay": "22 minutes",
+     "maximumDelay": "52 minutes",
+     "endTime": null,
+     "direction": null
+    }
+   ]
+  }
+ },
+ "weather": {
+  "status": "available",
+  "airports": {
+   "JFK": {
+    "observedAt": "2026-11-21T15:51:00Z",
+    "category": "VFR",
+    "windKt": 5,
+    "gustKt": null,
+    "visibilityMi": "10+",
+    "temperatureC": 17.2,
+    "dewpointC": 4.4,
+    "ceilingFt": 25000.0,
+    "wx": null
+   },
+   "EWR": {
+    "observedAt": "2026-11-21T15:51:00Z",
+    "category": "VFR",
+    "windKt": 4,
+    "gustKt": null,
+    "visibilityMi": "10+",
+    "temperatureC": 15.6,
+    "dewpointC": 4.4,
+    "ceilingFt": 25000.0,
+    "wx": null
+   },
+   "LGA": {
+    "observedAt": "2026-11-21T15:51:00Z",
+    "category": "VFR",
+    "windKt": 6,
+    "gustKt": null,
+    "visibilityMi": "10+",
+    "temperatureC": 14.4,
+    "dewpointC": 5,
+    "ceilingFt": 25000.0,
+    "wx": null
+   }
+  }
+ }
+}
