@@ -1,0 +1,52 @@
+{
+ "status": "live",
+ "source": "FAA NAS Status and NOAA Aviation Weather Center",
+ "fetchedAt": "2026-11-28T17:48:34Z",
+ "faa": {
+  "status": "available",
+  "updatedAt": "2026-11-28T17:48:25Z",
+  "events": {
+   "JFK": [],
+   "EWR": [],
+   "LGA": []
+  }
+ },
+ "weather": {
+  "status": "available",
+  "airports": {
+   "JFK": {
+    "observedAt": "2026-11-28T16:51:00Z",
+    "category": "VFR",
+    "windKt": 14,
+    "gustKt": 22,
+    "visibilityMi": "10+",
+    "temperatureC": 11.1,
+    "dewpointC": 1.7,
+    "ceilingFt": 7000.0,
+    "wx": null
+   },
+   "EWR": {
+    "observedAt": "2026-11-28T16:51:00Z",
+    "category": "VFR",
+    "windKt": 19,
+    "gustKt": 28,
+    "visibilityMi": "10+",
+    "temperatureC": 11.1,
+    "dewpointC": 1.7,
+    "ceilingFt": 6500.0,
+    "wx": null
+   },
+   "LGA": {
+    "observedAt": "2026-11-28T16:51:00Z",
+    "category": "VFR",
+    "windKt": 16,
+    "gustKt": 26,
+    "visibilityMi": "10+",
+    "temperatureC": 11.1,
+    "dewpointC": 1.7,
+    "ceilingFt": 6500.0,
+    "wx": null
+   }
+  }
+ }
+}
